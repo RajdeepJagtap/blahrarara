@@ -1514,7 +1514,7 @@ function attachHandlers(){
   // Home
   app.querySelector('#themeBtn')?.addEventListener('click', ()=>{ Theme.cycle(); render(); });
   app.querySelector('#settingsBtn')?.addEventListener('click', ()=>{ VIEW={screen:'settings'}; render(); });
-  app.querySelector('#newSubjectBtn')?.addEventListener('click',()=>newSubjectModal);
+  app.querySelector('#newSubjectBtn')?.addEventListener('click',()=>newSubjectModal());
   app.querySelectorAll('[data-open-subject]').forEach(b=>b.addEventListener('click', ()=>{ VIEW={screen:'subject', subjectId:b.dataset.openSubject}; render(); }));
   app.querySelectorAll('[data-rename-subject]').forEach(b=>b.addEventListener('click', ()=>renameSubjectModal(b.dataset.renameSubject)));
   app.querySelectorAll('[data-delete-subject]').forEach(b=>b.addEventListener('click', ()=>confirmSubjectDelete(b.dataset.deleteSubject)));
