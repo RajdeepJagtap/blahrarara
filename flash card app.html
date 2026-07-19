@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Card Index — Q&A Study System</title>
+<meta name="theme-color" content="#2F6F68">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Card Index">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180-apple-touch.png">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<style>
+/* =====================================================================
+   THEME TOKENS — light (default) + dark override
+   ===================================================================== */
+:root{
+  --ink:#232323; --ink-soft:#5b5b56; --paper:#F2F1EC; --card:#FFFEFA; --line:#DAD6C9;
+  --teal:#2F6F68; --teal-deep:#204E49; --amber:#E3A73A; --coral:#bd4439; --moss:#4C7A55;
+  --shadow: 0 1px 0 rgba(35,35,35,0.06), 0 8px 20px -12px rgba(35,35,35,0.25);
+  --content-width: 760px;
+  --heat-0:#e9e7de; --heat-1:#b7e2b0; --heat-2:#6fc27f; --heat-3:#379150; --heat-4:#1a5c30;
+}
+:root[data-theme="dark"]{
+  --ink:#ECEAE2; --ink-soft:#A6A399; --paper:#17181A; --card:#212325; --line:#34373A;
+  --teal:#4FA89F; --teal-deep:#3C8079; --amber:#E8BC5E; --coral:#E4776A; --moss:#7FBE8B;
+  --shadow: 0 1px 0 rgba(0,0,0,0.4), 0 8px 24px -12px rgba(0,0,0,0.7);
+  --heat-0:#26282b; --heat-1:#1c4a2c; --heat-2:#256e3a; --heat-3:#2f9a49; --heat-4:#4fd67a;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{background:var(--paper);color:var(--ink);font-family:'Public Sans',sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased;transition:background .2s,color .2s;}
+.app{max-width:var(--content-width);margin:0 auto;padding:28px 20px 80px;transition:max-width .2s;}
+h1,h2,h3{font-family:'Fraunces',serif;font-weight:600;margin:0;}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal-deep);opacity:.85;}
+button{font-family:'Public Sans',sans-serif;cursor:pointer;border:none;background:none;color:inherit;}
+button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:focus-visible{outline:2px solid var(--teal);outline-offset:2px;}
+::selection{background:var(--amber);color:#232323;}
+
+/* ---------- header / topbar ---------- */
+.topbar{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:10px;}
+.brand-mark{display:flex;align-items:center;gap:10px;}
+.brand-mark .tab{width:10px;height:22px;background:var(--teal);border-radius:2px 5px 5px 2px;}
+.top-actions{display:flex;gap:8px;}
+.icon-btn{background:transparent;color:var(--ink-soft);font-size:12px;font-family:'IBM Plex Mono',monospace;letter-spacing:.05em;padding:6px 10px;border-radius:20px;border:1px solid var(--line);transition:background .15s;}
+.icon-btn:hover{background:rgba(0,0,0,0.05);}
+.theme-btn{font-size:15px;padding:6px 10px;border-radius:20px;border:1px solid var(--line);}
+.theme-btn:hover{background:rgba(0,0,0,0.05);}
+
+/* ---------- buttons ---------- */
+.btn-primary{background:var(--teal);color:#fdfdf9;padding:10px 18px;border-radius:8px;font-weight:600;font-size:14px;box-shadow:var(--shadow);transition:transform .12s,background .15s;}
+.btn-primary:hover{background:var(--teal-deep);transform:translateY(-1px);}
+.btn-secondary{background:transparent;color:var(--teal);padding:9px 16px;border-radius:8px;font-weight:600;font-size:14px;border:1.5px solid var(--teal);}
+.btn-secondary:hover{background:rgba(47,111,104,0.1);}
+.btn-ghost{background:transparent;color:var(--ink-soft);font-size:13px;padding:6px 10px;border-radius:6px;}
+.btn-ghost:hover{background:rgba(0,0,0,0.05);color:var(--ink);}
+.btn-danger{color:var(--coral);}
+.back-link{display:inline-flex;align-items:center;gap:6px;color:var(--ink-soft);font-size:13px;margin-bottom:16px;background:none;}
+.back-link:hover{color:var(--ink);}
+
+/* ---------- panels ---------- */
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:26px;box-shadow:var(--shadow);}
+.empty-state{border:1.5px dashed var(--line);border-radius:12px;padding:44px 24px;text-align:center;color:var(--ink-soft);}
+.empty-state h3{margin-bottom:8px;color:var(--ink);}
+
+/* =====================================================================
+   DASHBOARD (stats strip) — reused on home + subject + deck
+   ===================================================================== */
+.dash-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 22px;}
+@media (max-width:520px){.dash-grid{grid-template-columns:repeat(2,1fr);}}
+.dash-box{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 10px;text-align:center;}
+.dash-box .n{font-family:'Fraunces',serif;font-size:26px;font-weight:600;}
+.dash-box .l{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);margin-top:2px;}
+.dash-box.streak .n{color:var(--amber);}
+
+/* =====================================================================
+   HEATMAP — GitHub-style activity calendar (reused 3 places)
+   ===================================================================== */
+.heatmap-wrap{margin:20px 0 26px;overflow-x:auto;}
+.heatmap-grid{display:flex;gap:3px;}
+.heatmap-col{display:flex;flex-direction:column;gap:3px;}
+.heatmap-cell{width:11px;height:11px;border-radius:2px;background:var(--heat-0);}
+.heatmap-legend{display:flex;align-items:center;gap:6px;margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-soft);}
+.heatmap-legend .heatmap-cell{width:10px;height:10px;}
+
+/* ---------- subject / deck catalog rows (shared style) ---------- */
+.catalog-head{display:flex;justify-content:space-between;align-items:center;margin:6px 0 16px;}
+.deck-row{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:12px;box-shadow:var(--shadow);position:relative;}
+.deck-row::before{content:"";position:absolute;left:-1px;top:10px;bottom:10px;width:4px;background:var(--teal);border-radius:3px;}
+.deck-info{flex:1;min-width:0;}
+.deck-name{font-family:'Fraunces',serif;font-size:19px;font-weight:600;margin-bottom:4px;}
+.deck-meta{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-soft);display:flex;gap:14px;flex-wrap:wrap;}
+.deck-actions{display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;}
+
+/* ---------- new deck / fields ---------- */
+.field{margin-bottom:18px;}
+.field label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;}
+.field input[type=text], .field textarea{width:100%;border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:13.5px;background:var(--paper);color:var(--ink);}
+.field textarea{min-height:220px;resize:vertical;line-height:1.5;}
+.dropzone{border:1.5px dashed var(--line);border-radius:10px;padding:20px;text-align:center;color:var(--ink-soft);font-size:13px;margin-bottom:14px;}
+.dropzone.drag{border-color:var(--teal);background:rgba(47,111,104,0.08);}
+.dropzone input{display:none;}
+.dropzone label{color:var(--teal);font-weight:600;cursor:pointer;text-decoration:underline;}
+.validation{border-radius:8px;padding:14px 16px;font-size:13.5px;margin-bottom:16px;}
+.validation.ok{background:rgba(76,122,85,0.12);color:var(--moss);border:1px solid rgba(76,122,85,.3);}
+.validation.err{background:rgba(193,71,59,0.1);color:var(--coral);border:1px solid rgba(193,71,59,.3);}
+.validation.warn{background:rgba(227,167,58,0.12);color:var(--amber);border:1px solid rgba(227,167,58,.35);}
+.validation ul{margin:8px 0 0;padding-left:18px;}
+
+/* ---------- deck detail / mode select ---------- */
+.section-label{font-size:16px;margin:22px 0 12px;font-family:'Fraunces',serif;font-weight:600;}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media (max-width:520px){.mode-grid{grid-template-columns:1fr;}}
+.mode-card{background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:16px;text-align:left;transition:border-color .15s,transform .12s;}
+.mode-card:hover:not(:disabled){border-color:var(--teal);transform:translateY(-2px);}
+.mode-card:disabled{opacity:.4;cursor:not-allowed;}
+.mode-card .m-title{font-weight:700;font-size:14.5px;margin-bottom:4px;}
+.mode-card .m-sub{font-size:12px;color:var(--ink-soft);}
+.mode-card .m-count{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--teal-deep);margin-top:6px;display:block;}
+.challenge-card{border-color:var(--amber);background:linear-gradient(135deg, rgba(227,167,58,0.08), transparent);}
+.record-pill{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;background:rgba(227,167,58,0.18);color:var(--amber);border-radius:20px;padding:2px 8px;margin-top:6px;}
+.deck-links{display:flex;gap:14px;margin-top:6px;flex-wrap:wrap;}
+.deck-links button{font-size:13px;color:var(--teal);font-weight:600;text-decoration:underline;}
+
+/* ---------- deck edit ---------- */
+.card-list-row{display:flex;align-items:flex-start;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;}
+.card-list-num{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--teal-deep);flex-shrink:0;padding-top:2px;}
+.card-list-body{flex:1;min-width:0;}
+.card-list-q{font-weight:600;font-size:14px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.card-list-a{font-size:12.5px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.card-list-actions{display:flex;gap:4px;flex-shrink:0;}
+.img-thumb-row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;}
+.img-thumb{position:relative;width:64px;height:64px;border-radius:6px;overflow:hidden;border:1px solid var(--line);}
+.img-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.img-thumb .rm{position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.6);color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;line-height:18px;text-align:center;padding:0;}
+.add-img-btn{border:1.5px dashed var(--line);border-radius:6px;width:64px;height:64px;font-size:20px;color:var(--ink-soft);}
+.add-img-btn:hover{border-color:var(--teal);color:var(--teal);}
+
+/* =====================================================================
+   QUIZ — 3D flip flashcard + slow swipe-to-grade + reel entry
+   ===================================================================== */
+.quiz-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.progress-track{height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:18px;}
+.progress-fill{height:100%;background:var(--teal);transition:width .25s ease;}
+.timer-hud{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;text-align:center;padding:8px;margin-bottom:14px;border-radius:8px;background:var(--card);border:1px solid var(--line);letter-spacing:.04em;}
+.timer-hud.low{color:var(--coral);border-color:var(--coral);}
+
+.stack-wrap{position:relative;margin-bottom:20px;overflow:hidden;}
+.stack-deco{position:absolute;inset:0;border-radius:14px;background:var(--card);border:1px solid var(--line);}
+.stack-deco.d1{transform:translate(6px,8px) rotate(1deg);opacity:.6;}
+.stack-deco.d2{transform:translate(-6px,14px) rotate(-1.4deg);opacity:.35;}
+
+.card-perspective{perspective:1400px;position:relative;}
+.card-perspective.entering{animation:reelIn .46s cubic-bezier(.16,1,.3,1) both;}
+@keyframes reelIn{from{transform:translateY(100%);}to{transform:translateY(0);}}
+@media (prefers-reduced-motion:reduce){.card-perspective.entering{animation:none;}}
+
+.card-flipper{position:relative;width:100%;min-height:260px;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.4,.2,.2,1);touch-action:pan-y;user-select:none;cursor:pointer;}
+.card-flipper.flipped{transform:rotateY(180deg);}
+.card-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:30px 26px;display:flex;flex-direction:column;overflow:auto;}
+.card-face.back{transform:rotateY(180deg);}
+.card-face.starred{border-color:var(--amber);}
+.card-face::before{content:"";position:absolute;left:22px;top:16px;width:8px;height:8px;border-radius:50%;background:var(--paper);border:1.5px solid var(--line);}
+.card-topline{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-left:22px;}
+.card-num{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);letter-spacing:.06em;}
+.star-btn{background:none;font-size:18px;color:var(--line);line-height:1;padding:2px;}
+.star-btn.on{color:var(--amber);}
+.q-text{font-family:'Fraunces',serif;font-weight:500;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;flex:1;padding-left:22px;}
+.a-text{font-family:'Public Sans',sans-serif;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink);flex:1;padding-left:22px;}
+.a-label{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--teal-deep);margin-bottom:6px;display:block;padding-left:22px;}
+.card-img{max-width:100%;max-height:220px;border-radius:8px;margin:10px 0 0 0;display:block;object-fit:contain;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+.tap-hint{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-soft);opacity:.55;margin-top:10px;}
+
+.swipe-stamp{position:absolute;top:26px;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:20px;letter-spacing:.08em;
+  padding:6px 14px;border-radius:8px;border:3px solid;transform:rotate(-12deg);opacity:0;pointer-events:none;z-index:5;}
+.swipe-stamp.right{right:20px;color:var(--moss);border-color:var(--moss);transform:rotate(12deg);}
+.swipe-stamp.left{left:20px;color:var(--coral);border-color:var(--coral);}
+
+.quiz-footer{display:flex;justify-content:space-between;align-items:center;margin-top:18px;}
+
+/* ---------- summary ---------- */
+.summary-hero{text-align:center;padding:20px 10px 8px;}
+.summary-hero .big{font-family:'Fraunces',serif;font-size:52px;font-weight:700;color:var(--teal-deep);}
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:22px 0;}
+.record-banner{background:rgba(227,167,58,0.15);border:1px solid var(--amber);color:var(--amber);border-radius:8px;padding:12px 14px;font-weight:700;text-align:center;margin-bottom:16px;}
+
+/* ---------- challenge setup ---------- */
+.goal-toggle{display:flex;gap:8px;margin-bottom:16px;}
+.goal-toggle button{flex:1;padding:10px;border-radius:8px;border:1.5px solid var(--line);font-weight:600;font-size:13px;}
+.goal-toggle button.active{border-color:var(--teal);background:rgba(47,111,104,0.1);color:var(--teal);}
+.preset-row{display:flex;gap:8px;margin-bottom:14px;}
+.preset-row button{flex:1;padding:9px;border-radius:8px;border:1.5px solid var(--line);font-size:13px;font-weight:600;}
+.preset-row button.active{border-color:var(--amber);background:rgba(227,167,58,0.12);color:var(--amber);}
+
+/* ---------- settings screen ---------- */
+.width-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:8px;}
+@media (max-width:520px){.width-grid{grid-template-columns:repeat(2,1fr);}}
+.width-card{border:1.5px solid var(--line);border-radius:10px;padding:14px 8px;text-align:center;}
+.width-card.active{border-color:var(--teal);background:rgba(47,111,104,0.08);}
+.width-card .swatch{height:26px;background:var(--line);border-radius:4px;margin:0 auto 8px;}
+.width-card .lbl{font-size:12.5px;font-weight:600;}
+
+/* ---------- modal ---------- */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50;}
+.modal-box{background:var(--card);border-radius:12px;padding:24px;max-width:420px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,.4);}
+.modal-box h3{margin-bottom:10px;}
+.modal-box p{font-size:14px;color:var(--ink-soft);line-height:1.5;margin:0 0 18px;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:6px;}
+.modal-box input[type=text]{width:100%;border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14px;margin-bottom:16px;font-family:'Public Sans',sans-serif;background:var(--paper);color:var(--ink);}
+.modal-box textarea{width:100%;border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13.5px;margin-bottom:14px;font-family:'Public Sans',sans-serif;background:var(--paper);color:var(--ink);min-height:80px;resize:vertical;}
+
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:30px;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:60;opacity:0;transition:opacity .25s,transform .25s;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-4px);}
+.footer-note{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-soft);opacity:.6;margin-top:36px;}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<div id="modalRoot"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+/* #####################################################################
+   MODULE: STORAGE — IndexedDB-backed key/value store
+   ##################################################################### */
+const Storage = (function(){
+  let dbPromise = null;
+  function openDB(){
+    if(dbPromise) return dbPromise;
+    dbPromise = new Promise((resolve, reject)=>{
+      const req = indexedDB.open('qa-anki-store', 1);
+      req.onupgradeneeded = ()=>{ req.result.createObjectStore('kv'); };
+      req.onsuccess = ()=>resolve(req.result);
+      req.onerror = ()=>reject(req.error);
+    });
+    return dbPromise;
+  }
+  return {
+    async get(key){
+      const db = await openDB();
+      return new Promise((resolve, reject)=>{
+        const tx = db.transaction('kv','readonly');
+        const req = tx.objectStore('kv').get(key);
+        req.onsuccess = ()=> resolve(req.result === undefined ? null : req.result);
+        req.onerror = ()=> reject(req.error);
+      });
+    },
+    async set(key, value){
+      const db = await openDB();
+      return new Promise((resolve, reject)=>{
+        const tx = db.transaction('kv','readwrite');
+        tx.objectStore('kv').put(value, key);
+        tx.oncomplete = ()=> resolve(true);
+        tx.onerror = ()=> reject(tx.error);
+      });
+    }
+  };
+})();
+
+/* #####################################################################
+   MODULE: STATE
+   subjects: { id: { id, name, createdAt, deckIds:[] } }
+   decks:    { id: { id, subjectId, name, cards:[], dailyActivity:{}, totalStudyTimeMs, records } }
+   activity: global daily counts, 'YYYY-MM-DD' -> count
+   settings: { theme, columnWidth }
+   ##################################################################### */
+const STORAGE_KEY = 'qa-anki-data-v3';
+let STATE = { subjects:{}, decks:{}, activity:{}, settings:{ theme:'auto', columnWidth:'default' } };
+let saveTimer = null;
+
+async function loadState(){
+  try{
+    const raw = await Storage.get(STORAGE_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      STATE = Object.assign({ subjects:{}, decks:{}, activity:{}, settings:{theme:'auto',columnWidth:'default'} }, parsed);
+    }
+  }catch(e){ /* first run */ }
+  Theme.init();
+  Layout.init();
+  render();
+}
+function persist(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    try{ await Storage.set(STORAGE_KEY, JSON.stringify(STATE)); }
+    catch(e){ console.error('save failed', e); showToast('Could not save — changes may be lost'); }
+  }, 250);
+}
+
+/* #####################################################################
+   MODULE: THEME (dark mode)
+   ##################################################################### */
+const Theme = {
+  apply(pref){
+    const effective = pref === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : pref;
+    document.documentElement.setAttribute('data-theme', effective);
+  },
+  cycle(){
+    const order = ['auto','light','dark'];
+    const cur = STATE.settings.theme || 'auto';
+    const next = order[(order.indexOf(cur)+1) % order.length];
+    STATE.settings.theme = next; persist(); Theme.apply(next);
+    return next;
+  },
+  icon(){ const t = STATE.settings.theme || 'auto'; return t==='auto' ? '◐ Auto' : t==='dark' ? '● Dark' : '○ Light'; },
+  init(){
+    Theme.apply(STATE.settings.theme || 'auto');
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()=>{
+      if((STATE.settings.theme||'auto') === 'auto') Theme.apply('auto');
+    });
+  }
+};
+
+/* #####################################################################
+   MODULE: LAYOUT (column width setting)
+   ##################################################################### */
+const Layout = {
+  PRESETS: { narrow:'600px', default:'760px', wide:'980px', full:'100%' },
+  apply(preset){ document.documentElement.style.setProperty('--content-width', Layout.PRESETS[preset] || Layout.PRESETS.default); },
+  set(preset){ STATE.settings.columnWidth = preset; persist(); Layout.apply(preset); },
+  init(){ Layout.apply(STATE.settings.columnWidth || 'default'); }
+};
+
+/* #####################################################################
+   MODULE: UTILITIES
+   ##################################################################### */
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function fmtDate(ts){ if(!ts) return '—'; return new Date(ts).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}); }
+function fmtDuration(ms){
+  if(!ms || ms < 1000) return '0m';
+  const totalMin = Math.round(ms/60000);
+  const h = Math.floor(totalMin/60), m = totalMin%60;
+  return h>0 ? `${h}h ${m}m` : `${m}m`;
+}
+function fmtClock(seconds){
+  seconds = Math.max(0, Math.round(seconds));
+  const m = Math.floor(seconds/60), s = seconds%60;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function closeModal(){ document.getElementById('modalRoot').innerHTML = ''; }
+function openModal({title, body, actions}){
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `<div class="modal-backdrop" id="mbackdrop"><div class="modal-box"><h3>${title}</h3>${body||''}<div class="modal-actions" id="mactions"></div></div></div>`;
+  const actWrap = document.getElementById('mactions');
+  actions.forEach(a=>{
+    const btn = document.createElement('button');
+    btn.className = a.className || 'btn-secondary';
+    btn.textContent = a.label;
+    btn.onclick = a.onClick;
+    actWrap.appendChild(btn);
+  });
+  document.getElementById('mbackdrop').addEventListener('click', e=>{ if(e.target.id==='mbackdrop') closeModal(); });
+}
+
+/* #####################################################################
+   MODULE: IMAGE COMPRESSION
+   ##################################################################### */
+const MAX_IMAGES_PER_SIDE = 3;
+function compressImageFile(file, maxDim=1000, quality=0.82){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      const img = new Image();
+      img.onload = ()=>{
+        let { width, height } = img;
+        if(width > maxDim || height > maxDim){
+          if(width > height){ height = Math.round(height*maxDim/width); width = maxDim; }
+          else { width = Math.round(width*maxDim/height); height = maxDim; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img,0,0,width,height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = ()=>reject(new Error('Could not read image'));
+      img.src = reader.result;
+    };
+    reader.onerror = ()=>reject(new Error('Could not read file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+/* #####################################################################
+   MODULE: PARSER — plain text path (paste box) + docx path (upload)
+   Recognizes Q / Question / Ques and A / Answer / Ans, case-insensitive.
+   Self-heals full-width chars, BOM, curly quotes, CRLF line endings.
+   ##################################################################### */
+const Parser = {
+  MARKER_RE: /(^|\n)[ \t]*(question|ques|answer|ans|q|a)[ \t]*[-.:]?\s*(\d+)[ \t]*[.):\-]?[ \t]*/gi,
+  MARKER_LINE_RE: /^[ \t]*(question|ques|answer|ans|q|a)[ \t]*[-.:]?\s*(\d+)[ \t]*[.):\-]?[ \t]*/i,
+
+  normalize(raw){
+    return raw.replace(/^\uFEFF/, '').normalize('NFKC')
+      .replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+      .replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"').replace(/[\u2013\u2014]/g, '-');
+  },
+  classify(word){ return /^q/i.test(word) ? 'Q' : 'A'; },
+
+  parseText(rawInput){
+    const raw = Parser.normalize(rawInput);
+    const re = new RegExp(Parser.MARKER_RE.source, Parser.MARKER_RE.flags);
+    let m, rawMatches = [];
+    while((m = re.exec(raw)) !== null){
+      rawMatches.push({ type: Parser.classify(m[2]), num: parseInt(m[3],10), contentStart: re.lastIndex, markerStart: m.index });
+    }
+    if(rawMatches.length === 0){
+      return { errors: ['No Q/Question/Ques or A/Answer/Ans markers were found.'], warnings: [], cards: [] };
+    }
+    for(let i=0;i<rawMatches.length;i++){
+      // anything between this marker's content and the next marker belongs to this
+      // entry — text that doesn't follow the Q/A pattern simply never starts a new
+      // entry, so it's naturally folded in here and never blocks parsing.
+      const contentEnd = (i+1 < rawMatches.length) ? rawMatches[i+1].markerStart : raw.length;
+      rawMatches[i].content = raw.slice(rawMatches[i].contentStart, contentEnd).trim();
+    }
+    return Parser._buildCards(rawMatches.map(m=>({type:m.type, num:m.num, text:m.content, images:[]})));
+  },
+
+  parseHtmlBlocks(htmlString){
+      const doc = new DOMParser().parseFromString(htmlString, 'text/html');
+      // Query for block-level elements anywhere in the document — not just the
+      // direct children of <body> — so markers inside Word lists, numbered
+      // paragraphs, and table cells (which mammoth nests inside <ul>/<ol>/<table>)
+      // are still found instead of silently disappearing.
+      const blocks = Array.from(doc.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6, div'))
+        .filter(el => !el.querySelector('p, li, h1, h2, h3, h4, h5, h6')); // keep only leaf blocks, avoid double-counting containers
+      const sections = [];
+      let current = null;
+      blocks.forEach(block=>{
+        // Word "soft returns" (Shift+Enter) become a <br> INSIDE one paragraph rather than
+        // a new block element. Without splitting on <br> first, everything after the first
+        // marker in a paragraph (e.g. the "A1." that follows "Q1." on a soft-returned line)
+        // gets folded into the previous entry's text instead of starting its own — which is
+        // exactly why every Q was found but every A was reported as missing. Splitting each
+        // block's HTML on <br> gives every line its own chance to start a new Q/A section.
+        const lineChunks = block.innerHTML.split(/<br\s*\/?>/i);
+        lineChunks.forEach(chunkHtml=>{
+          const wrapper = document.createElement('div');
+          wrapper.innerHTML = chunkHtml;
+          const text = (wrapper.textContent || '').trim();
+          const images = Array.from(wrapper.querySelectorAll('img')).map(img=>img.getAttribute('src'));
+          const m = text.match(Parser.MARKER_LINE_RE);
+          if(m){
+            const type = Parser.classify(m[1]);
+            const num = parseInt(m[2],10);
+            const remainder = text.slice(m[0].length).trim();
+            current = { type, num, textParts: remainder ? [remainder] : [], images: images.slice() };
+            sections.push(current);
+          } else if(current){
+            // stray non-matching content (stray paragraphs, notes, blank lines) just
+            // gets folded into whichever Q/A entry is currently open, or ignored
+            // entirely if no entry has started yet — it never blocks the import.
+            if(text) current.textParts.push(text);
+            if(images.length) current.images.push(...images);
+          }
+        });
+      });
+      if(sections.length === 0){
+        return { errors: ['No Q/Question/Ques or A/Answer/Ans markers were found in this document.'], warnings: [], cards: [] };
+      }
+      return Parser._buildCards(sections.map(s=>({type:s.type, num:s.num, text:s.textParts.join('\n'), images:s.images})));
+    },
+
+  _buildCards(entries){
+    const qMap = {}, aMap = {};
+    const warnings = [];
+    entries.forEach(e=>{
+      const target = e.type==='Q' ? qMap : aMap;
+      if(!target[e.num]) target[e.num] = [];
+      target[e.num].push({ text: e.text, images: e.images.slice(0, MAX_IMAGES_PER_SIDE) });
+    });
+    const allNums = Array.from(new Set(entries.map(e=>e.num))).sort((a,b)=>a-b);
+    const cards = [];
+    // Every valid Q/A pair becomes a card. A problem with one pair (missing match,
+    // duplicate, empty side) only skips that one number — logged as a warning —
+    // instead of failing the entire import, no matter how large the source file is.
+    allNums.forEach(n=>{
+      const qs = qMap[n] || [], as = aMap[n] || [];
+      if(qs.length===0){ warnings.push(`A${n} has no matching Q${n} — skipped.`); return; }
+      if(as.length===0){ warnings.push(`Q${n} has no matching A${n} — skipped.`); return; }
+      if(qs.length>1) warnings.push(`Q${n} appeared ${qs.length} times — used the first, ignored the rest.`);
+      if(as.length>1) warnings.push(`A${n} appeared ${as.length} times — used the first, ignored the rest.`);
+      const q = qs[0], a = as[0];
+      if(!q.text && q.images.length===0){ warnings.push(`Q${n} is empty — skipped.`); return; }
+      if(!a.text && a.images.length===0){ warnings.push(`A${n} is empty — skipped.`); return; }
+      cards.push({ id: uid(), num:n, q, a, starred:false, correctCount:0, incorrectCount:0, lastResult:null, lastStudied:null });
+    });
+    return { errors: [], warnings, cards };
+  }
+};
+
+/* #####################################################################
+   MODULE: STATS
+   Global + per-deck daily activity logs. Rolling windows, streak,
+   deck stats, and the heatmap color-bucket function.
+   ##################################################################### */
+const Stats = {
+  dayKey(when){
+    const d = new Date(when);
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  },
+  recordReview(deck, when){
+    const key = Stats.dayKey(when || Date.now());
+    STATE.activity[key] = (STATE.activity[key] || 0) + 1;
+    if(!deck.dailyActivity) deck.dailyActivity = {};
+    deck.dailyActivity[key] = (deck.dailyActivity[key] || 0) + 1;
+  },
+  sumLastNDays(log, n, now){
+    let total = 0;
+    for(let i=0;i<n;i++){
+      const d = new Date(now || Date.now());
+      d.setDate(d.getDate()-i);
+      total += log[Stats.dayKey(d)] || 0;
+    }
+    return total;
+  },
+  streak(log, now){
+    let streak = 0;
+    let cursor = new Date(now || Date.now());
+    if(!log[Stats.dayKey(cursor)]) cursor.setDate(cursor.getDate()-1);
+    while(log[Stats.dayKey(cursor)]){ streak++; cursor.setDate(cursor.getDate()-1); }
+    return streak;
+  },
+  deckStats(deck){
+    const total = deck.cards.length;
+    let studied=0, correct=0, incorrect=0;
+    deck.cards.forEach(c=>{
+      if(c.correctCount+c.incorrectCount>0) studied++;
+      correct += c.correctCount; incorrect += c.incorrectCount;
+    });
+    const accuracy = (correct+incorrect)>0 ? Math.round((correct/(correct+incorrect))*100) : null;
+    return { total, studied, correct, incorrect, accuracy };
+  },
+  subjectScopedActivity(subject){
+    const merged = {};
+    function collect(subj){
+      subjectDeckList(subj.id).forEach(deck=>{
+        Object.entries(deck.dailyActivity||{}).forEach(([day,count])=>{ merged[day] = (merged[day]||0)+count; });
+      });
+      childSubjectList(subj.id).forEach(collect);
+    }
+    collect(subject);
+    return merged;
+  },
+  /* 0 -> empty, 1-30 -> light green ... darker as count grows (per project spec) */
+  heatLevel(count){
+    if(!count) return 0;
+    if(count <= 30) return 1;
+    if(count <= 60) return 2;
+    if(count <= 100) return 3;
+    return 4;
+  }
+};
+
+/* #####################################################################
+   MODULE: HEATMAP RENDERING — reused on home / subject / deck screens
+   ##################################################################### */
+function renderHeatmap(activityLog, weeks){
+  weeks = weeks || 18;
+  const days = weeks * 7;
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const start = new Date(today);
+  start.setDate(start.getDate() - (days - 1));
+  // align start to a Sunday so columns read like a real calendar
+  start.setDate(start.getDate() - start.getDay());
+
+  const cols = [];
+  let cursor = new Date(start);
+  while(cursor <= today || cols.length < weeks + 2){
+    const col = [];
+    for(let d=0; d<7; d++){
+      const key = Stats.dayKey(cursor);
+      const count = activityLog[key] || 0;
+      const inRange = cursor <= today;
+      col.push({ key, count, inRange, level: inRange ? Stats.heatLevel(count) : -1 });
+      cursor.setDate(cursor.getDate()+1);
+    }
+    cols.push(col);
+    if(cursor > today) break;
+  }
+
+  const colHtml = cols.map(col=>`<div class="heatmap-col">${col.map(cell=>
+    cell.level < 0 ? `<div class="heatmap-cell" style="visibility:hidden;"></div>` :
+    `<div class="heatmap-cell" style="background:var(--heat-${cell.level});" title="${cell.key}: ${cell.count} review${cell.count===1?'':'s'}"></div>`
+  ).join('')}</div>`).join('');
+
+  return `
+    <div class="heatmap-wrap">
+      <div class="heatmap-grid">${colHtml}</div>
+      <div class="heatmap-legend">
+        <span>Less</span>
+        ${[0,1,2,3,4].map(l=>`<div class="heatmap-cell" style="background:var(--heat-${l});"></div>`).join('')}
+        <span>More</span>
+      </div>
+    </div>
+  `;
+}
+
+/* #####################################################################
+   MODULE: CHALLENGE — personal records per deck
+   ##################################################################### */
+const Challenge = {
+  ensureRecords(deck){
+    if(!deck.records) deck.records = { beatClock:{}, beatTime:{} };
+    if(!deck.records.beatClock) deck.records.beatClock = {};
+    if(!deck.records.beatTime) deck.records.beatTime = {};
+    return deck.records;
+  },
+  submitBeatClock(deck, presetSeconds, correctCount, totalSeen){
+    const records = Challenge.ensureRecords(deck);
+    const key = String(presetSeconds);
+    const previous = records.beatClock[key] || null;
+    const isNewRecord = !previous || correctCount > previous.correct;
+    if(isNewRecord) records.beatClock[key] = { correct: correctCount, total: totalSeen, date: Date.now() };
+    return { isNewRecord, previous };
+  },
+  submitBeatTime(deck, timeMs, cardCount){
+    const records = Challenge.ensureRecords(deck);
+    const previous = records.beatTime.best || null;
+    const isNewRecord = !previous || timeMs < previous.timeMs;
+    if(isNewRecord) records.beatTime.best = { timeMs, cardCount, date: Date.now() };
+    return { isNewRecord, previous };
+  }
+};
+
+/* #####################################################################
+   MODULE: SUBJECT OPERATIONS
+   ##################################################################### */
+function subjectList(){ return Object.values(STATE.subjects).filter(s=>!s.parentId).sort((a,b)=> b.createdAt - a.createdAt); }
+function subjectDeckList(subjectId){
+  const subj = STATE.subjects[subjectId];
+  if(!subj) return [];
+  return subj.deckIds.map(id=>STATE.decks[id]).filter(Boolean).sort((a,b)=> b.createdAt - a.createdAt);
+}
+function childSubjectList(subjectId){
+  const subj = STATE.subjects[subjectId];
+  if(!subj) return [];
+  return (subj.subjectIds||[]).map(id=>STATE.subjects[id]).filter(Boolean).sort((a,b)=> b.createdAt - a.createdAt);
+}
+function subjectTotalDeckCount(subjectId){
+  const subj = STATE.subjects[subjectId];
+  if(!subj) return 0;
+  let count = (subj.deckIds||[]).length;
+  (subj.subjectIds||[]).forEach(cid=> count += subjectTotalDeckCount(cid));
+  return count;
+}
+const Subjects = {
+  create(name, parentId){
+    const id = uid();
+    STATE.subjects[id] = { id, name, createdAt: Date.now(), parentId: parentId || null, deckIds: [], subjectIds: [] };
+    if(parentId && STATE.subjects[parentId]){
+      if(!STATE.subjects[parentId].subjectIds) STATE.subjects[parentId].subjectIds = [];
+      STATE.subjects[parentId].subjectIds.push(id);
+    }
+    persist();
+    return id;
+  },
+  rename(id, name){ STATE.subjects[id].name = name; persist(); },
+  remove(id){
+    const subj = STATE.subjects[id];
+    // remove child subjects first (recursively), then this subject's own decks
+    (subj.subjectIds||[]).slice().forEach(childId => Subjects.remove(childId));
+    subj.deckIds.forEach(deckId=> delete STATE.decks[deckId]);
+    if(subj.parentId && STATE.subjects[subj.parentId]){
+      STATE.subjects[subj.parentId].subjectIds = (STATE.subjects[subj.parentId].subjectIds||[]).filter(cid=>cid!==id);
+    }
+    delete STATE.subjects[id];
+    persist();
+  }
+};
+/* #####################################################################
+   MODULE: DECK OPERATIONS
+   ##################################################################### */
+const Decks = {
+  create(subjectId, name, cards){
+    const id = uid();
+    STATE.decks[id] = { id, subjectId, name, createdAt: Date.now(), lastStudyDate: null, totalStudyTimeMs: 0, dailyActivity: {}, cards, records: { beatClock:{}, beatTime:{} } };
+    STATE.subjects[subjectId].deckIds.push(id);
+    persist();
+    return id;
+  },
+  rename(id, name){ STATE.decks[id].name = name; persist(); },
+  duplicate(id){
+    const src = STATE.decks[id];
+    const newId = uid();
+    STATE.decks[newId] = {
+      id: newId, subjectId: src.subjectId, name: src.name+' (copy)', createdAt: Date.now(), lastStudyDate: null,
+      totalStudyTimeMs: 0, dailyActivity: {}, records: { beatClock:{}, beatTime:{} },
+      cards: src.cards.map(c=>({ ...c, id: uid(), correctCount:0, incorrectCount:0, lastResult:null, lastStudied:null, starred:false }))
+    };
+    STATE.subjects[src.subjectId].deckIds.push(newId);
+    persist();
+    return newId;
+  },
+  remove(id){
+    const deck = STATE.decks[id];
+    const subj = STATE.subjects[deck.subjectId];
+    if(subj) subj.deckIds = subj.deckIds.filter(d=>d!==id);
+    delete STATE.decks[id];
+    persist();
+  },
+  addCard(deckId, q, a){
+    const deck = STATE.decks[deckId];
+    const nextNum = deck.cards.length ? Math.max(...deck.cards.map(c=>c.num))+1 : 1;
+    deck.cards.push({ id: uid(), num: nextNum, q, a, starred:false, correctCount:0, incorrectCount:0, lastResult:null, lastStudied:null });
+    persist();
+  },
+  updateCard(deckId, cardId, q, a){
+    const card = STATE.decks[deckId].cards.find(c=>c.id===cardId);
+    card.q = q; card.a = a;
+    persist();
+  },
+  removeCard(deckId, cardId){
+    const deck = STATE.decks[deckId];
+    deck.cards = deck.cards.filter(c=>c.id!==cardId);
+    persist();
+  },
+  exportToAnki(deckId){
+    const deck = STATE.decks[deckId];
+    const side = (s)=>{
+      let html = escapeHtml(s.text||'').replace(/\t/g,' ').replace(/\n/g,'<br>');
+      (s.images||[]).forEach(src=>{ html += `<br><img src="${src}">`; });
+      return html;
+    };
+    const lines = deck.cards.map(c => `${side(c.q)}\t${side(c.a)}`);
+    const content = '#separator:tab\n#html:true\n' + lines.join('\n');
+    const blob = new Blob([content], {type:'text/plain'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = deck.name.replace(/[^\w\-]+/g,'_') + '_anki_import.txt';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Downloaded — import via Anki: File > Import');
+  }
+};
+
+/* #####################################################################
+   MODULE: QUIZ ENGINE — session building + grading
+   ##################################################################### */
+const Quiz = {
+  session: null,
+  build(deck, mode, opts){
+    opts = opts || {};
+    let pool;
+    if(mode==='sequential'){ pool = deck.cards.slice().sort((a,b)=>a.num-b.num); }
+    else if(mode==='random'){ pool = shuffle(deck.cards); }
+    else if(mode==='randomN'){ pool = shuffle(deck.cards).slice(0, Math.min(opts.n, deck.cards.length)); }
+    else if(mode==='shuffleAll'){ pool = shuffle(deck.cards); }
+    else if(mode==='wrong'){ pool = shuffle(deck.cards.filter(c=>c.lastResult==='incorrect')); }
+    else if(mode==='starred'){ pool = deck.cards.filter(c=>c.starred).sort((a,b)=>a.num-b.num); }
+    else if(mode==='challenge'){ pool = shuffle(deck.cards); }
+
+    Quiz.session = {
+      deckId: deck.id, mode, queue: pool, index: 0, revealed: false,
+      infinite: mode==='random',
+      sessionCorrect: 0, sessionIncorrect: 0, total: pool.length,
+      startedAt: Date.now(),
+      challenge: opts.challenge || null
+    };
+    return Quiz.session;
+  },
+  current(){
+    const s = Quiz.session;
+    if(!s) return null;
+    if(s.infinite){ return s.queue.length ? s.queue[s.index % s.queue.length] : null; }
+    return s.queue[s.index] || null;
+  },
+  grade(result){
+    const s = Quiz.session;
+    const deck = STATE.decks[s.deckId];
+    const card = Quiz.current();
+    const dc = deck.cards.find(c=>c.id===card.id);
+    if(result==='correct'){ dc.correctCount++; s.sessionCorrect++; } else { dc.incorrectCount++; s.sessionIncorrect++; }
+    dc.lastResult = result; dc.lastStudied = Date.now();
+    deck.lastStudyDate = Date.now();
+    Stats.recordReview(deck, Date.now());
+    s.index++; s.revealed = false;
+    persist();
+  },
+  isFinished(){
+    const s = Quiz.session;
+    if(!s) return true;
+    if(s.infinite) return false;
+    return s.index >= s.total;
+  },
+  endSession(){
+    const s = Quiz.session;
+    if(!s) return;
+    const deck = STATE.decks[s.deckId];
+    deck.totalStudyTimeMs = (deck.totalStudyTimeMs||0) + (Date.now()-s.startedAt);
+    persist();
+  }
+};
+
+/* #####################################################################
+   MODULE: QUIZ GESTURES — tap-to-flip (real 3D flip, no re-render needed
+   for the flip itself) + slow swipe-to-grade + reel entry for the next card
+   ##################################################################### */
+const Gestures = {
+  SWIPE_THRESHOLD: 90,
+  FLY_DURATION: 480,   // ms — slow enough to actually see the card leave
+  SNAP_DURATION: 320,
+  drag: null,
+
+  attach(flipperEl){
+    // Touch Events are the primary, reliable path on iOS Safari (Pointer Events +
+    // setPointerCapture are flaky there and can misreport/garble drag coordinates,
+    // which is what causes a right-swipe to sometimes register as incorrect).
+    flipperEl.addEventListener('touchstart', Gestures.onTouchStart, {passive:true});
+    // Pointer Events stay as the fallback path for mouse/trackpad on desktop.
+    flipperEl.addEventListener('pointerdown', Gestures.onDown);
+  },
+
+  /* ---------- touch path (primary, used on iPad/iPhone) ---------- */
+  onTouchStart(e){
+    if(Gestures.drag) return;
+    const t = e.changedTouches[0];
+    Gestures.drag = { startX: t.clientX, startY: t.clientY, dragging: false, el: e.currentTarget, touchId: t.identifier, isTouch: true };
+    e.currentTarget.addEventListener('touchmove', Gestures.onTouchMove, {passive:false});
+    e.currentTarget.addEventListener('touchend', Gestures.onTouchEnd);
+    e.currentTarget.addEventListener('touchcancel', Gestures.onTouchEnd);
+  },
+  onTouchMove(e){
+    const d = Gestures.drag;
+    if(!d || !d.isTouch) return;
+    if(!Quiz.session.revealed) return;
+    const t = Array.from(e.changedTouches).find(t=>t.identifier===d.touchId);
+    if(!t) return;
+    const dx = t.clientX - d.startX, dy = t.clientY - d.startY;
+    if(Math.abs(dx) > 6 || Math.abs(dy) > 6) d.dragging = true;
+    if(d.dragging){
+      e.preventDefault(); // stop the page/scroll from hijacking the horizontal drag
+      Gestures.applyDrag(d.el, dx);
+    }
+  },
+  onTouchEnd(e){
+    const d = Gestures.drag;
+    if(!d || !d.isTouch) return;
+    d.el.removeEventListener('touchmove', Gestures.onTouchMove);
+    d.el.removeEventListener('touchend', Gestures.onTouchEnd);
+    d.el.removeEventListener('touchcancel', Gestures.onTouchEnd);
+    const t = Array.from(e.changedTouches).find(t=>t.identifier===d.touchId) || e.changedTouches[0];
+    const dx = t.clientX - d.startX;
+    Gestures.finishDrag(d, dx);
+  },
+
+  /* ---------- pointer path (fallback, used for mouse/trackpad) ---------- */
+  onDown(e){
+    if(e.pointerType === 'touch') return; // touch handled above for reliability
+    Gestures.drag = { startX: e.clientX, startY: e.clientY, dragging: false, el: e.currentTarget, isTouch: false };
+    e.currentTarget.setPointerCapture(e.pointerId);
+    e.currentTarget.addEventListener('pointermove', Gestures.onMove);
+    e.currentTarget.addEventListener('pointerup', Gestures.onUp);
+    e.currentTarget.addEventListener('pointercancel', Gestures.onUp);
+  },
+  onMove(e){
+    const d = Gestures.drag;
+    if(!d || d.isTouch) return;
+    if(!Quiz.session.revealed) return;
+    const dx = e.clientX - d.startX, dy = e.clientY - d.startY;
+    if(Math.abs(dx) > 6 || Math.abs(dy) > 6) d.dragging = true;
+    if(d.dragging) Gestures.applyDrag(d.el, dx);
+  },
+  onUp(e){
+    const d = Gestures.drag;
+    if(!d || d.isTouch) return;
+    d.el.removeEventListener('pointermove', Gestures.onMove);
+    d.el.removeEventListener('pointerup', Gestures.onUp);
+    d.el.removeEventListener('pointercancel', Gestures.onUp);
+    const dx = e.clientX - d.startX;
+    Gestures.finishDrag(d, dx);
+  },
+
+  /* ---------- shared drag visuals + resolution ---------- */
+  applyDrag(el, dx){
+    // preserve the flip's rotateY(180deg) while adding the drag offset,
+    // so dragging the answer side doesn't un-flip it
+    el.style.transition = 'none';
+    el.style.transform = `translateX(${dx}px) rotateY(180deg) rotate(${dx/22}deg)`;
+    const wrap = el.closest('.stack-wrap');
+    const rightStamp = wrap.querySelector('.swipe-stamp.right');
+    const leftStamp = wrap.querySelector('.swipe-stamp.left');
+    if(rightStamp) rightStamp.style.opacity = Math.max(0, Math.min(1, dx/Gestures.SWIPE_THRESHOLD));
+    if(leftStamp) leftStamp.style.opacity = Math.max(0, Math.min(1, -dx/Gestures.SWIPE_THRESHOLD));
+  },
+  finishDrag(d, dx){
+    const el = d.el;
+    if(!d.dragging){
+      // genuine tap — flip slowly via CSS transition, no re-render (keeps it smooth)
+      Gestures.drag = null;
+      Quiz.session.revealed = !Quiz.session.revealed;
+      el.classList.toggle('flipped', Quiz.session.revealed);
+      updateTapHint();
+      return;
+    }
+    if(Quiz.session.revealed && Math.abs(dx) > Gestures.SWIPE_THRESHOLD){
+      const result = dx > 0 ? 'correct' : 'incorrect';
+      const flyX = dx > 0 ? window.innerWidth : -window.innerWidth;
+      el.style.transition = `transform ${Gestures.FLY_DURATION}ms ease`;
+      el.style.transform = `translateX(${flyX}px) rotateY(180deg) rotate(${dx/14}deg)`;
+      el.style.opacity = '0';
+      el.style.transitionProperty = 'transform, opacity';
+      Gestures.drag = null;
+      setTimeout(()=>{ Quiz.grade(result); Gestures.afterGrade(); }, Gestures.FLY_DURATION);
+    } else {
+      el.style.transition = `transform ${Gestures.SNAP_DURATION}ms ease`;
+      el.style.transform = 'translateX(0) rotateY(180deg) rotate(0)';
+      const wrap = el.closest('.stack-wrap');
+      const rightStamp = wrap.querySelector('.swipe-stamp.right');
+      const leftStamp = wrap.querySelector('.swipe-stamp.left');
+      if(rightStamp) rightStamp.style.opacity = 0;
+      if(leftStamp) leftStamp.style.opacity = 0;
+      Gestures.drag = null;
+    }
+  },
+  afterGrade(){
+    if(Quiz.isFinished()){
+      Quiz.endSession();
+      if(Quiz.session.challenge && Quiz.session.challenge.goalType==='beatTime'){
+        Challenge.submitBeatTime(STATE.decks[Quiz.session.deckId], Date.now()-Quiz.session.startedAt, Quiz.session.total);
+      }
+      VIEW = { screen:'summary' };
+    }
+    render();
+  }
+};
+function updateTapHint(){
+  const hint = document.getElementById('tapHint');
+  if(hint) hint.textContent = Quiz.session.revealed ? 'Swipe right = correct · swipe left = incorrect' : 'Tap the card to reveal the answer';
+}
+
+/* #####################################################################
+   VIEW STATE + ROOT RENDER
+   ##################################################################### */
+let VIEW = { screen: 'home' };
+let pendingParse = { cards: [], errors: [], warnings: [], raw: '' };
+let challengeTimerHandle = null;
+
+function render(){
+  const app = document.getElementById('app');
+  clearInterval(challengeTimerHandle);
+  if(VIEW.screen==='home') app.innerHTML = renderHome();
+  else if(VIEW.screen==='settings') app.innerHTML = renderSettings();
+  else if(VIEW.screen==='subject') app.innerHTML = renderSubject();
+  else if(VIEW.screen==='new-deck') app.innerHTML = renderNewDeck();
+  else if(VIEW.screen==='deck') app.innerHTML = renderDeckDetail();
+  else if(VIEW.screen==='deck-edit') app.innerHTML = renderDeckEdit();
+  else if(VIEW.screen==='quiz') app.innerHTML = renderQuiz();
+  else if(VIEW.screen==='summary') app.innerHTML = renderSummary();
+  attachHandlers();
+}
+
+/* #####################################################################
+   RENDER: HOME — subjects list + global dashboard + global heatmap
+   ##################################################################### */
+function renderHome(){
+  const subjects = subjectList();
+  const today = Stats.sumLastNDays(STATE.activity,1);
+  const week = Stats.sumLastNDays(STATE.activity,7);
+  const month = Stats.sumLastNDays(STATE.activity,30);
+  const streak = Stats.streak(STATE.activity);
+  return `
+    <div class="topbar">
+      <div class="brand-mark"><div class="tab"></div><h1>Your subjects</h1></div>
+      <div class="top-actions">
+        <button class="theme-btn" id="themeBtn" title="Toggle theme">${Theme.icon()}</button>
+        <button class="icon-btn" id="settingsBtn">⚙ Settings</button>
+      </div>
+    </div>
+    <div class="dash-grid">
+      <div class="dash-box"><div class="n">${today}</div><div class="l">Today</div></div>
+      <div class="dash-box"><div class="n">${week}</div><div class="l">Last 7 days</div></div>
+      <div class="dash-box"><div class="n">${month}</div><div class="l">Last 30 days</div></div>
+      <div class="dash-box streak"><div class="n">${streak}🔥</div><div class="l">Day streak</div></div>
+    </div>
+    ${renderHeatmap(STATE.activity)}
+    <div class="catalog-head">
+      <span class="eyebrow">${subjects.length} subject${subjects.length===1?'':'s'}</span>
+      <button class="btn-primary" id="newSubjectBtn">+ New subject</button>
+    </div>
+    ${subjects.length===0 ? `
+      <div class="empty-state"><h3>No subjects yet</h3><p>Create a subject (like "JLPT" or "Cybersecurity") to hold your decks.</p></div>
+    ` : subjects.map(s=>{
+      const childCount = childSubjectList(s.id).length;
+      const totalDecks = subjectTotalDeckCount(s.id);
+      return `
+      <div class="deck-row">
+        <div class="deck-info">
+          <div class="deck-name">${escapeHtml(s.name)}</div>
+          <div class="deck-meta"><span>${childCount} sub-subject${childCount===1?'':'s'}</span><span>${totalDecks} deck${totalDecks===1?'':'s'} total</span></div>
+        </div>
+        <div class="deck-actions">
+          <button class="btn-secondary" data-open-subject="${s.id}">Open</button>
+          <button class="btn-ghost" data-rename-subject="${s.id}" title="Rename">✎</button>
+          <button class="btn-ghost btn-danger" data-delete-subject="${s.id}" title="Delete">✕</button>
+        </div>
+      </div>`;
+    }).join('')}
+    <div class="footer-note">Cards stored on this device · export any deck anytime for a full Anki backup</div>
+  `;
+}
+
+/* #####################################################################
+   RENDER: SETTINGS
+   ##################################################################### */
+function renderSettings(){
+  const cur = STATE.settings.columnWidth || 'default';
+  const labels = { narrow:'Narrow', default:'Default', wide:'Wide', full:'Full width' };
+  return `
+    <button class="back-link" id="backHome">← Back to subjects</button>
+    <h2 style="margin-bottom:18px;">Settings</h2>
+    <div class="panel">
+      <div class="section-label" style="margin-top:0;">Column width</div>
+      <p style="color:var(--ink-soft);font-size:13.5px;margin-bottom:14px;">Controls how wide the app's content area is on larger screens.</p>
+      <div class="width-grid">
+        ${Object.keys(Layout.PRESETS).map(key=>`
+          <button class="width-card ${cur===key?'active':''}" data-width="${key}">
+            <div class="swatch" style="width:${key==='narrow'?'40%':key==='default'?'60%':key==='wide'?'80%':'100%'};"></div>
+            <div class="lbl">${labels[key]}</div>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+/* #####################################################################
+   RENDER: SUBJECT — decks within + scoped dashboard + scoped heatmap
+   ##################################################################### */
+function renderSubject(){
+  const subj = STATE.subjects[VIEW.subjectId];
+  if(!subj){ VIEW={screen:'home'}; return renderHome(); }
+  const childSubjects = childSubjectList(subj.id);
+  const decks = subjectDeckList(subj.id);
+  const scopedLog = Stats.subjectScopedActivity(subj);
+  const today = Stats.sumLastNDays(scopedLog,1);
+  const week = Stats.sumLastNDays(scopedLog,7);
+  const month = Stats.sumLastNDays(scopedLog,30);
+  const streak = Stats.streak(scopedLog);
+
+  const trail = [];
+  let cursor = subj;
+  while(cursor){ trail.unshift(cursor); cursor = cursor.parentId ? STATE.subjects[cursor.parentId] : null; }
+  const breadcrumbHtml = `
+    <div class="eyebrow" style="margin-bottom:6px;">
+      <button class="btn-ghost" data-crumb-home style="padding:2px 4px;">Subjects</button>
+      ${trail.map(t=>` / <button class="btn-ghost" data-crumb-subject="${t.id}" style="padding:2px 4px;">${escapeHtml(t.name)}</button>`).join('')}
+    </div>
+  `;
+
+  return `
+    <button class="back-link" id="backToParentOrHome">← Back to ${subj.parentId ? escapeHtml((STATE.subjects[subj.parentId]||{}).name||'parent') : 'subjects'}</button>
+    ${breadcrumbHtml}
+    <h1 style="margin-bottom:16px;">${escapeHtml(subj.name)}</h1>
+    <div class="dash-grid">
+      <div class="dash-box"><div class="n">${today}</div><div class="l">Today</div></div>
+      <div class="dash-box"><div class="n">${week}</div><div class="l">Last 7 days</div></div>
+      <div class="dash-box"><div class="n">${month}</div><div class="l">Last 30 days</div></div>
+      <div class="dash-box streak"><div class="n">${streak}🔥</div><div class="l">Day streak</div></div>
+    </div>
+    ${renderHeatmap(scopedLog)}
+    <div class="catalog-head">
+      <span class="eyebrow">${childSubjects.length} sub-subject${childSubjects.length===1?'':'s'} · ${decks.length} deck${decks.length===1?'':'s'}</span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-secondary" id="newSubjectFromSubjectBtn">+ New subject</button>
+        <button class="btn-primary" id="newDeckBtn">+ New deck</button>
+      </div>
+    </div>
+    ${childSubjects.map(cs=>{
+      const csChildCount = (cs.subjectIds||[]).length;
+      const csDeckCount = subjectTotalDeckCount(cs.id);
+      return `
+      <div class="deck-row">
+        <div class="deck-info">
+          <div class="deck-name">📁 ${escapeHtml(cs.name)}</div>
+          <div class="deck-meta"><span>${csChildCount} sub-subject${csChildCount===1?'':'s'}</span><span>${csDeckCount} deck${csDeckCount===1?'':'s'} total</span></div>
+        </div>
+        <div class="deck-actions">
+          <button class="btn-secondary" data-open-subject="${cs.id}">Open</button>
+          <button class="btn-ghost" data-rename-subject="${cs.id}" title="Rename">✎</button>
+          <button class="btn-ghost btn-danger" data-delete-subject="${cs.id}" title="Delete">✕</button>
+        </div>
+      </div>`;
+    }).join('')}
+    ${decks.length===0 && childSubjects.length===0 ? `
+      <div class="empty-state"><h3>Nothing here yet</h3><p>Create a sub-subject to organize further, or paste/upload a Q1./A1. document to build a deck.</p></div>
+    ` : decks.map(d=>{
+      const s = Stats.deckStats(d);
+      return `
+      <div class="deck-row">
+        <div class="deck-info">
+          <div class="deck-name">${escapeHtml(d.name)}</div>
+          <div class="deck-meta">
+            <span>${s.total} cards</span><span>${s.accuracy===null?'—':s.accuracy+'% accuracy'}</span>
+            <span>${fmtDuration(d.totalStudyTimeMs)} studied</span><span>last: ${fmtDate(d.lastStudyDate)}</span>
+          </div>
+        </div>
+        <div class="deck-actions">
+          <button class="btn-secondary" data-open-deck="${d.id}">Study</button>
+          <button class="btn-ghost" data-rename="${d.id}" title="Rename">✎</button>
+          <button class="btn-ghost" data-dup="${d.id}" title="Duplicate">⧉</button>
+          <button class="btn-ghost" data-export="${d.id}" title="Export to Anki">⭳</button>
+          <button class="btn-ghost btn-danger" data-delete="${d.id}" title="Delete">✕</button>
+        </div>
+      </div>`;
+    }).join('')}
+  `;
+}
+
+/* #####################################################################
+   RENDER: NEW DECK (created inside the current subject)
+   ##################################################################### */
+function renderNewDeck(){
+  return `
+    <button class="back-link" id="backToSubject">← Back to ${escapeHtml(STATE.subjects[VIEW.subjectId].name)}</button>
+    <h2 style="margin-bottom:18px;">Build a new deck</h2>
+    <div class="panel">
+      <div class="field"><label>Deck name</label><input type="text" id="deckNameInput" placeholder="e.g. N3 Grammar — Chapter 4" value="${escapeHtml(VIEW.suggestedName||'')}"></div>
+      <div class="dropzone" id="dropzone">
+        Drop a .docx file here (supports images), or <label for="fileInput">choose a file</label>
+        <input type="file" id="fileInput" accept=".docx">
+      </div>
+      <div class="field">
+        <label>Or paste your Q1./A1. text directly (text only — no images)</label>
+        <textarea id="rawText" placeholder="Q1.\nQuestion text...\n\nA1.\nAnswer text...">${escapeHtml(pendingParse.raw)}</textarea>
+      </div>
+      <div style="display:flex; gap:10px; margin-bottom:6px;">
+        <button class="btn-secondary" id="parseBtn">Validate</button>
+        <button class="btn-primary" id="createDeckBtn" ${pendingParse.cards.length===0 ? 'disabled style="opacity:.4;cursor:not-allowed;"':''}>Create deck</button>
+      </div>
+      <div id="validationArea">${renderValidation()}</div>
+    </div>
+  `;
+}
+function renderValidation(){
+  const warnings = pendingParse.warnings || [];
+  const errors = pendingParse.errors || [];
+  if(errors.length){
+    return `<div class="validation err"><strong>${errors.length} issue${errors.length===1?'':'s'} found</strong><ul>${errors.map(e=>`<li>${escapeHtml(e)}</li>`).join('')}</ul></div>`;
+  }
+  let html = '';
+  if(pendingParse.cards.length){
+    html += `<div class="validation ok">✓ ${pendingParse.cards.length} matched Q&A pairs, numbered ${pendingParse.cards[0].num}–${pendingParse.cards[pendingParse.cards.length-1].num}. Ready to create.</div>`;
+  } else if(warnings.length){
+    html += `<div class="validation err"><strong>No usable Q&A pairs found.</strong> Everything detected was skipped — see notes below.</div>`;
+  }
+  if(warnings.length){
+    html += `<div class="validation warn"><strong>${warnings.length} line${warnings.length===1?'':'s'} skipped or adjusted</strong><ul>${warnings.map(w=>`<li>${escapeHtml(w)}</li>`).join('')}</ul></div>`;
+  }
+  return html;
+}
+
+/* #####################################################################
+   RENDER: DECK DETAIL — mode select + challenge entry + deck heatmap
+   ##################################################################### */
+function renderDeckDetail(){
+  const deck = STATE.decks[VIEW.deckId];
+  if(!deck){ VIEW={screen:'home'}; return renderHome(); }
+  const s = Stats.deckStats(deck);
+  const wrongCount = deck.cards.filter(c=>c.lastResult==='incorrect').length;
+  const starredCount = deck.cards.filter(c=>c.starred).length;
+  const records = Challenge.ensureRecords(deck);
+  const bestTime = records.beatTime.best;
+  return `
+    <button class="back-link" id="backToSubject">← Back to ${escapeHtml(STATE.subjects[deck.subjectId].name)}</button>
+    <div class="eyebrow">Deck</div>
+    <h1 style="margin-bottom:10px;">${escapeHtml(deck.name)}</h1>
+    <div class="deck-links"><button id="editDeckLink">Edit cards</button><button id="exportDeckLink">Export to Anki</button></div>
+    <div class="dash-grid" style="margin-top:16px;">
+      <div class="dash-box"><div class="n">${s.total}</div><div class="l">Total</div></div>
+      <div class="dash-box"><div class="n">${s.accuracy===null?'—':s.accuracy+'%'}</div><div class="l">Accuracy</div></div>
+      <div class="dash-box"><div class="n">${fmtDuration(deck.totalStudyTimeMs)}</div><div class="l">Time studied</div></div>
+      <div class="dash-box"><div class="n">${fmtDate(deck.lastStudyDate)}</div><div class="l">Last studied</div></div>
+    </div>
+    ${renderHeatmap(deck.dailyActivity||{})}
+    <div class="section-label">Revision modes</div>
+    <div class="mode-grid">
+      <button class="mode-card" data-mode="sequential"><div class="m-title">Sequential</div><div class="m-sub">Go through the deck in order.</div><span class="m-count">${s.total} cards</span></button>
+      <button class="mode-card" data-mode="random" ${s.total===0?'disabled':''}><div class="m-title">Random revision</div><div class="m-sub">Open-ended, draws with replacement.</div><span class="m-count">continues until you stop</span></button>
+      <button class="mode-card" data-mode="randomN" ${s.total===0?'disabled':''}><div class="m-title">Random N questions</div><div class="m-sub">Pick a set size.</div><span class="m-count">up to ${s.total} cards</span></button>
+      <button class="mode-card" data-mode="shuffleAll" ${s.total===0?'disabled':''}><div class="m-title">Entire deck, shuffled</div><div class="m-sub">One full pass, randomized.</div><span class="m-count">${s.total} cards</span></button>
+      <button class="mode-card" data-mode="wrong" ${wrongCount===0?'disabled':''}><div class="m-title">Wrong answers only</div><div class="m-sub">Revisit last-incorrect cards.</div><span class="m-count">${wrongCount} card${wrongCount===1?'':'s'}</span></button>
+      <button class="mode-card" data-mode="starred" ${starredCount===0?'disabled':''}><div class="m-title">Starred questions</div><div class="m-sub">Just your flagged cards.</div><span class="m-count">${starredCount} card${starredCount===1?'':'s'}</span></button>
+    </div>
+    <div class="section-label">Challenge</div>
+    <button class="mode-card challenge-card" id="startChallengeBtn" ${s.total===0?'disabled':''} style="width:100%;">
+      <div class="m-title">⚡ Timed challenge</div><div class="m-sub">Beat the clock, or beat your best time.</div>
+      ${bestTime ? `<span class="record-pill">Best full pass: ${fmtClock(bestTime.timeMs/1000)}</span>` : ''}
+    </button>
+  `;
+}
+
+/* #####################################################################
+   RENDER: DECK EDIT
+   ##################################################################### */
+function renderDeckEdit(){
+  const deck = STATE.decks[VIEW.deckId];
+  if(!deck){ VIEW={screen:'home'}; return renderHome(); }
+  const cards = deck.cards.slice().sort((a,b)=>a.num-b.num);
+  return `
+    <button class="back-link" id="backToDeckDetail">← Back to deck</button>
+    <h2 style="margin-bottom:6px;">Edit "${escapeHtml(deck.name)}"</h2>
+    <p class="eyebrow" style="margin-bottom:16px;">${cards.length} card${cards.length===1?'':'s'}</p>
+    <button class="btn-primary" id="addCardBtn" style="margin-bottom:16px;">+ Add card</button>
+    ${cards.length===0 ? `<div class="empty-state"><h3>No cards yet</h3><p>Add your first card.</p></div>` :
+      cards.map(c=>`
+      <div class="card-list-row">
+        <div class="card-list-num">Q${c.num}</div>
+        <div class="card-list-body"><div class="card-list-q">${escapeHtml(c.q.text||'(image only)')}</div><div class="card-list-a">${escapeHtml(c.a.text||'(image only)')}</div></div>
+        <div class="card-list-actions">
+          <button class="btn-ghost" data-edit-card="${c.id}" title="Edit">✎</button>
+          <button class="btn-ghost btn-danger" data-delete-card="${c.id}" title="Delete">✕</button>
+        </div>
+      </div>
+    `).join('')}
+  `;
+}
+function cardEditModalBody(existingCard){
+  const q = existingCard ? existingCard.q : { text:'', images:[] };
+  const a = existingCard ? existingCard.a : { text:'', images:[] };
+  const thumbRow = (side, images) => `
+    <div class="img-thumb-row" id="${side}ImgRow">
+      ${images.map((src,i)=>`<div class="img-thumb"><img src="${src}"><button class="rm" data-rm-img="${side}:${i}">✕</button></div>`).join('')}
+      ${images.length < MAX_IMAGES_PER_SIDE ? `<label class="add-img-btn" for="${side}ImgInput">+<input type="file" accept="image/*" id="${side}ImgInput" data-img-input="${side}" style="display:none;"></label>` : ''}
+    </div>`;
+  return `
+    <div class="field"><label>Question text</label><textarea id="qTextInput">${escapeHtml(q.text)}</textarea></div>
+    <label style="display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;">Question images (${q.images.length}/${MAX_IMAGES_PER_SIDE})</label>
+    ${thumbRow('q', q.images)}
+    <div class="field" style="margin-top:14px;"><label>Answer text</label><textarea id="aTextInput">${escapeHtml(a.text)}</textarea></div>
+    <label style="display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;">Answer images (${a.images.length}/${MAX_IMAGES_PER_SIDE})</label>
+    ${thumbRow('a', a.images)}
+  `;
+}
+
+/* #####################################################################
+   RENDER: QUIZ — 3D flip card (both faces always in DOM) + swipe
+   ##################################################################### */
+function cardSideHtml(side){
+  const imgs = (side.images||[]).map(src=>`<img class="card-img" src="${src}">`).join('');
+  return `<div>${escapeHtml(side.text)}</div>${imgs}`;
+}
+function sizeCardFlipper(){
+  const flipper = document.getElementById('cardFlipper');
+  if(!flipper) return;
+  const front = flipper.querySelector('.card-face.front');
+  const back = flipper.querySelector('.card-face.back');
+  if(!front || !back) return;
+  // scrollHeight reflects the true content height even while the box is
+  // visually clipped/scrollable, so this works regardless of current size
+  const targetH = Math.max(260, front.scrollHeight, back.scrollHeight);
+  flipper.style.height = targetH + 'px';
+}
+function renderQuiz(){
+  const s = Quiz.session;
+  const deck = STATE.decks[s.deckId];
+  const card = Quiz.current();
+  if(!card){
+    return `<div class="panel"><h3>Nothing to study here yet.</h3><p style="color:var(--ink-soft);margin-top:10px;">This filter has no cards right now.</p>
+      <button class="btn-primary" style="margin-top:16px;" id="quizExit">Back to deck</button></div>`;
+  }
+  const pct = s.infinite ? Math.min(100,(s.index%20)/20*100) : Math.round((s.index/Math.max(s.total,1))*100);
+  const posLabel = s.infinite ? `Card ${s.index+1} · open session` : `Card ${s.index+1} of ${s.total}`;
+
+  let timerHud = '';
+  if(s.challenge){
+    timerHud = s.challenge.goalType==='beatClock'
+      ? `<div class="timer-hud" id="challengeTimerEl">${fmtClock(s.challenge.presetSeconds)}</div>`
+      : `<div class="timer-hud" id="challengeTimerEl">${fmtClock(0)}</div>`;
+  }
+
+  return `
+    <div class="quiz-head">
+      <button class="back-link" id="quizExit" style="margin:0;">← End session</button>
+      <span class="eyebrow">${escapeHtml(deck.name)}</span>
+    </div>
+    ${timerHud}
+    <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="eyebrow" style="margin-bottom:8px;">${posLabel}</div>
+    <div class="stack-wrap">
+      ${!s.infinite && s.total - s.index > 2 ? '<div class="stack-deco d2"></div><div class="stack-deco d1"></div>' : ''}
+      <div class="swipe-stamp right">CORRECT</div>
+      <div class="swipe-stamp left">SKIP</div>
+      <div class="card-perspective entering">
+        <div class="card-flipper ${s.revealed?'flipped':''}" id="cardFlipper">
+          <div class="card-face front ${card.starred?'starred':''}">
+            <div class="card-topline"><span class="card-num">Q${card.num}</span><button class="star-btn ${card.starred?'on':''}" id="starBtn">★</button></div>
+            <div class="q-text">${cardSideHtml(card.q)}</div>
+          </div>
+          <div class="card-face back ${card.starred?'starred':''}">
+            <div class="card-topline"><span class="card-num">Q${card.num}</span><span class="a-label" style="padding-left:0;">Answer</span></div>
+            <div class="a-text">${cardSideHtml(card.a)}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tap-hint" id="tapHint">${s.revealed ? 'Swipe right = correct · swipe left = incorrect' : 'Tap the card to reveal the answer'}</div>
+    <div class="quiz-footer"><span class="eyebrow">this session: ${s.sessionCorrect} correct · ${s.sessionIncorrect} incorrect</span></div>
+  `;
+}
+
+function startChallengeTimerTick(){
+  const s = Quiz.session;
+  if(!s || !s.challenge) return;
+  challengeTimerHandle = setInterval(()=>{
+    const el = document.getElementById('challengeTimerEl');
+    if(!el) return;
+    if(s.challenge.goalType==='beatClock'){
+      const elapsed = (Date.now()-s.startedAt)/1000;
+      const remaining = s.challenge.presetSeconds - elapsed;
+      el.textContent = fmtClock(Math.max(0,remaining));
+      el.classList.toggle('low', remaining<=10);
+      if(remaining<=0){
+        clearInterval(challengeTimerHandle);
+        Quiz.endSession();
+        Challenge.submitBeatClock(STATE.decks[s.deckId], s.challenge.presetSeconds, s.sessionCorrect, s.sessionCorrect+s.sessionIncorrect);
+        VIEW = { screen:'summary' };
+        render();
+      }
+    } else {
+      el.textContent = fmtClock((Date.now()-s.startedAt)/1000);
+    }
+  }, 500);
+}
+
+/* #####################################################################
+   RENDER: SUMMARY
+   ##################################################################### */
+function renderSummary(){
+  const s = Quiz.session;
+  const deck = STATE.decks[s.deckId];
+  const total = s.sessionCorrect + s.sessionIncorrect;
+  const acc = total ? Math.round(s.sessionCorrect/total*100) : 0;
+  let recordBanner = '';
+  if(s.challenge){
+    const records = Challenge.ensureRecords(deck);
+    if(s.challenge.goalType==='beatClock'){
+      const rec = records.beatClock[String(s.challenge.presetSeconds)];
+      if(rec && rec.correct===s.sessionCorrect && (Date.now()-rec.date)<5000) recordBanner = `<div class="record-banner">🏆 New personal best — ${rec.correct} correct in ${fmtClock(s.challenge.presetSeconds)}!</div>`;
+    } else {
+      const rec = records.beatTime.best;
+      if(rec && (Date.now()-rec.date)<5000) recordBanner = `<div class="record-banner">🏆 New personal best time — ${fmtClock(rec.timeMs/1000)}!</div>`;
+    }
+  }
+  return `
+    <div class="panel">
+      <div class="eyebrow" style="text-align:center;">Session complete — ${escapeHtml(deck.name)}</div>
+      ${recordBanner}
+      <div class="summary-hero"><div class="big">${acc}%</div><div style="color:var(--ink-soft);font-size:13px;">accuracy this session</div></div>
+      <div class="summary-grid">
+        <div class="stat-box"><div class="n">${s.sessionCorrect}</div><div class="l">Correct</div></div>
+        <div class="stat-box"><div class="n">${s.sessionIncorrect}</div><div class="l">Incorrect</div></div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-secondary" style="flex:1;" id="backToDeck">Back to deck</button>
+        <button class="btn-primary" style="flex:1;" id="studyAgain">Study again</button>
+      </div>
+    </div>
+  `;
+}
+
+/* #####################################################################
+   MODALS
+   ##################################################################### */
+function confirmDeckDelete(deckId){
+  const deck = STATE.decks[deckId];
+  openModal({ title:`Delete "${deck.name}"?`, body:`<p>This removes all ${deck.cards.length} cards and study history. This can't be undone.</p>`,
+    actions:[ {label:'Cancel', className:'btn-secondary', onClick: closeModal},
+      {label:'Delete deck', className:'btn-primary btn-danger', onClick:()=>{ Decks.remove(deckId); closeModal(); showToast('Deck deleted'); render(); }} ]});
+}
+function renameDeckModal(deckId){
+  const deck = STATE.decks[deckId];
+  openModal({ title:'Rename deck', body:`<input type="text" id="renameInput" value="${escapeHtml(deck.name)}">`,
+    actions:[ {label:'Cancel', className:'btn-secondary', onClick: closeModal},
+      {label:'Save', className:'btn-primary', onClick:()=>{ const v=document.getElementById('renameInput').value.trim(); if(v) Decks.rename(deckId,v); closeModal(); render(); }} ]});
+  setTimeout(()=>document.getElementById('renameInput')?.focus(),30);
+}
+function newSubjectModal(parentId){
+  openModal({ title: parentId ? 'New sub-subject' : 'New subject', body:`<input type="text" id="subjectNameInput" placeholder="e.g. JLPT, Cybersecurity">`,
+    actions:[ {label:'Cancel', className:'btn-secondary', onClick: closeModal},
+      {label:'Create', className:'btn-primary', onClick:()=>{
+          const v = document.getElementById('subjectNameInput').value.trim();
+          if(!v){ showToast('Give the subject a name'); return; }
+          Subjects.create(v, parentId);
+          closeModal(); showToast('Subject created'); render();
+        }} ]});
+  setTimeout(()=>document.getElementById('subjectNameInput')?.focus(),30);
+}
+function renameSubjectModal(subjectId){
+  const subj = STATE.subjects[subjectId];
+  openModal({ title:'Rename subject', body:`<input type="text" id="renameSubjectInput" value="${escapeHtml(subj.name)}">`,
+    actions:[ {label:'Cancel', className:'btn-secondary', onClick: closeModal},
+      {label:'Save', className:'btn-primary', onClick:()=>{ const v=document.getElementById('renameSubjectInput').value.trim(); if(v) Subjects.rename(subjectId,v); closeModal(); render(); }} ]});
+  setTimeout(()=>document.getElementById('renameSubjectInput')?.focus(),30);
+}
+function confirmSubjectDelete(subjectId){
+  const subj = STATE.subjects[subjectId];
+  const deckCount = subjectTotalDeckCount(subjectId);
+  openModal({ title:`Delete "${subj.name}"?`, body:`<p>This removes ${deckCount} deck${deckCount===1?'':'s'} and any sub-subjects inside it, along with all study history. This can't be undone.</p>`,
+    actions:[ {label:'Cancel', className:'btn-secondary', onClick: closeModal},
+      {label:'Delete subject', className:'btn-primary btn-danger', onClick:()=>{
+          const parentId = subj.parentId;
+          Subjects.remove(subjectId); closeModal(); showToast('Subject deleted');
+          VIEW = parentId ? {screen:'subject', subjectId:parentId} : {screen:'home'};
+          render();
+        }} ]});
+}
+
+function openCardEditModal(deckId, cardId){
+  const deck = STATE.decks[deckId];
+  const existing = cardId ? deck.cards.find(c=>c.id===cardId) : null;
+  let workingImages = { q: existing ? existing.q.images.slice() : [], a: existing ? existing.a.images.slice() : [] };
+  function refreshBody(){
+    document.getElementById('mBody').innerHTML = cardEditModalBody({ q:{text:document.getElementById('qTextInput').value, images:workingImages.q}, a:{text:document.getElementById('aTextInput').value, images:workingImages.a} });
+    wireImageControls();
+  }
+  function wireImageControls(){
+    document.querySelectorAll('[data-img-input]').forEach(inp=>{
+      inp.addEventListener('change', async ()=>{
+        const side = inp.dataset.imgInput;
+        const file = inp.files[0];
+        if(!file) return;
+        try{ const dataUrl = await compressImageFile(file); workingImages[side].push(dataUrl); refreshBody(); }
+        catch(err){ showToast('Could not read that image'); }
+      });
+    });
+    document.querySelectorAll('[data-rm-img]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{ const [side, idx] = btn.dataset.rmImg.split(':'); workingImages[side].splice(parseInt(idx,10),1); refreshBody(); });
+    });
+  }
+  openModal({
+    title: existing ? `Edit Q${existing.num}` : 'Add card',
+    body: `<div id="mBody">${cardEditModalBody(existing)}</div>`,
+    actions: [
+      { label:'Cancel', className:'btn-secondary', onClick: closeModal },
+      { label: existing ? 'Save' : 'Add card', className:'btn-primary', onClick:()=>{
+          const qText = document.getElementById('qTextInput').value.trim();
+          const aText = document.getElementById('aTextInput').value.trim();
+          if(!qText && workingImages.q.length===0){ showToast('Question needs text or an image'); return; }
+          if(!aText && workingImages.a.length===0){ showToast('Answer needs text or an image'); return; }
+          const q = { text:qText, images:workingImages.q }, a = { text:aText, images:workingImages.a };
+          if(existing) Decks.updateCard(deckId, existing.id, q, a); else Decks.addCard(deckId, q, a);
+          closeModal(); render();
+        }}
+    ]
+  });
+  setTimeout(wireImageControls, 30);
+}
+
+function openChallengeSetupModal(deckId){
+  const deck = STATE.decks[deckId];
+  const records = Challenge.ensureRecords(deck);
+  let goalType = 'beatClock', preset = 180;
+  function body(){
+    const rec = goalType==='beatClock' ? records.beatClock[String(preset)] : records.beatTime.best;
+    return `
+      <div class="goal-toggle">
+        <button class="${goalType==='beatClock'?'active':''}" data-goal="beatClock">Beat the clock</button>
+        <button class="${goalType==='beatTime'?'active':''}" data-goal="beatTime">Beat your time</button>
+      </div>
+      ${goalType==='beatClock' ? `
+        <p style="margin-bottom:8px;">Get as many correct as you can before time runs out.</p>
+        <div class="preset-row">${[60,180,300].map(p=>`<button class="${preset===p?'active':''}" data-preset="${p}">${fmtClock(p)}</button>`).join('')}</div>
+        ${rec ? `<p><span class="record-pill">Best: ${rec.correct} correct</span></p>` : `<p style="color:var(--ink-soft);">No record yet — this'll be your first.</p>`}
+      ` : `
+        <p style="margin-bottom:8px;">Get through the whole shuffled deck as fast as possible.</p>
+        ${rec ? `<p><span class="record-pill">Best: ${fmtClock(rec.timeMs/1000)}</span></p>` : `<p style="color:var(--ink-soft);">No record yet — this'll be your first.</p>`}
+      `}
+    `;
+  }
+  function wire(){
+    document.querySelectorAll('[data-goal]').forEach(b=>b.addEventListener('click', ()=>{ goalType=b.dataset.goal; refresh(); }));
+    document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click', ()=>{ preset=parseInt(b.dataset.preset,10); refresh(); }));
+  }
+  function refresh(){ document.getElementById('mBody').innerHTML = body(); wire(); }
+  openModal({
+    title: '⚡ Timed challenge', body: `<div id="mBody">${body()}</div>`,
+    actions: [
+      { label:'Cancel', className:'btn-secondary', onClick: closeModal },
+      { label:'Start', className:'btn-primary', onClick:()=>{
+          closeModal();
+          const opts = goalType==='beatClock' ? { challenge:{ goalType, presetSeconds: preset } } : { challenge:{ goalType } };
+          Quiz.build(deck, 'challenge', opts);
+          VIEW = { screen:'quiz' }; render();
+        }}
+    ]
+  });
+  setTimeout(wire, 30);
+}
+
+/* #####################################################################
+   EVENT HANDLERS
+   ##################################################################### */
+function attachHandlers(){
+  const app = document.getElementById('app');
+
+  // Home
+  app.querySelector('#themeBtn')?.addEventListener('click', ()=>{ Theme.cycle(); render(); });
+  app.querySelector('#settingsBtn')?.addEventListener('click', ()=>{ VIEW={screen:'settings'}; render(); });
+  app.querySelector('#newSubjectBtn')?.addEventListener('click', newSubjectModal);
+  app.querySelectorAll('[data-open-subject]').forEach(b=>b.addEventListener('click', ()=>{ VIEW={screen:'subject', subjectId:b.dataset.openSubject}; render(); }));
+  app.querySelectorAll('[data-rename-subject]').forEach(b=>b.addEventListener('click', ()=>renameSubjectModal(b.dataset.renameSubject)));
+  app.querySelectorAll('[data-delete-subject]').forEach(b=>b.addEventListener('click', ()=>confirmSubjectDelete(b.dataset.deleteSubject)));
+
+  // Settings
+  app.querySelector('#backHome')?.addEventListener('click', ()=>{ VIEW={screen:'home'}; render(); });
+  app.querySelectorAll('[data-width]').forEach(b=>b.addEventListener('click', ()=>{ Layout.set(b.dataset.width); render(); }));
+
+  // Subject
+  app.querySelector('#newDeckBtn')?.addEventListener('click', ()=>{ pendingParse={cards:[],errors:[],warnings:[],raw:''}; VIEW={screen:'new-deck', subjectId:VIEW.subjectId}; render(); });
+  app.querySelectorAll('[data-open-deck]').forEach(b=>b.addEventListener('click', ()=>{ VIEW={screen:'deck', deckId:b.dataset.openDeck}; render(); }));
+  app.querySelectorAll('[data-rename]').forEach(b=>b.addEventListener('click', ()=>renameDeckModal(b.dataset.rename)));
+  app.querySelectorAll('[data-dup]').forEach(b=>b.addEventListener('click', ()=>{ Decks.duplicate(b.dataset.dup); showToast('Deck duplicated'); render(); }));
+  app.querySelectorAll('[data-export]').forEach(b=>b.addEventListener('click', ()=>Decks.exportToAnki(b.dataset.export)));
+  app.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click', ()=>confirmDeckDelete(b.dataset.delete)));
+  app.querySelectorAll('[data-open-subject]').forEach(b=>b.addEventListener('click', ()=>{ VIEW={screen:'subject', subjectId:b.dataset.openSubject}; render(); }));
+  app.querySelectorAll('[data-rename-subject]').forEach(b=>b.addEventListener('click', ()=>renameSubjectModal(b.dataset.renameSubject)));
+  app.querySelectorAll('[data-delete-subject]').forEach(b=>b.addEventListener('click', ()=>confirmSubjectDelete(b.dataset.deleteSubject)));
+  app.querySelector('#newSubjectFromSubjectBtn')?.addEventListener('click', ()=>newSubjectModal(VIEW.subjectId));
+  app.querySelector('#backToParentOrHome')?.addEventListener('click', ()=>{
+    const subj = STATE.subjects[VIEW.subjectId];
+    VIEW = (subj && subj.parentId) ? {screen:'subject', subjectId:subj.parentId} : {screen:'home'};
+    render();
+  });
+  app.querySelector('[data-crumb-home]')?.addEventListener('click', ()=>{ VIEW={screen:'home'}; render(); });
+  app.querySelectorAll('[data-crumb-subject]').forEach(b=>b.addEventListener('click', ()=>{ VIEW={screen:'subject', subjectId:b.dataset.crumbSubject}; render(); }));
+  // New deck
+  app.querySelector('#backToSubject')?.addEventListener('click', ()=>{
+    const subjectId = VIEW.subjectId || STATE.decks[VIEW.deckId]?.subjectId;
+    VIEW={screen:'subject', subjectId}; render();
+  });
+  app.querySelector('#parseBtn')?.addEventListener('click', ()=>{
+    const raw = document.getElementById('rawText').value;
+    if(!raw.trim()){
+      // Nothing typed here — most likely the cards already came from a .docx
+      // upload above. Don't overwrite that good result with an empty parse.
+      showToast('Paste some Q1./A1. text first, or just use the .docx result above');
+      return;
+    }
+    const result = Parser.parseText(raw);
+    pendingParse = { cards: result.cards, errors: result.errors, warnings: result.warnings || [], raw };
+    render();
+  });
+  app.querySelector('#createDeckBtn')?.addEventListener('click', ()=>{
+    if(pendingParse.cards.length===0) return;
+    const name = document.getElementById('deckNameInput').value.trim() || `Deck ${Object.keys(STATE.decks).length+1}`;
+    const id = Decks.create(VIEW.subjectId, name, pendingParse.cards);
+    pendingParse = {cards:[],errors:[],warnings:[],raw:''};
+    VIEW = { screen:'deck', deckId:id };
+    showToast('Deck created'); render();
+  });
+  const dz = app.querySelector('#dropzone');
+  const fileInput = app.querySelector('#fileInput');
+  if(dz){
+    dz.addEventListener('dragover', e=>{ e.preventDefault(); dz.classList.add('drag'); });
+    ['dragleave','drop'].forEach(evt=>dz.addEventListener(evt, e=>{ e.preventDefault(); dz.classList.remove('drag'); }));
+    dz.addEventListener('drop', e=>handleDocxFile(e.dataTransfer.files[0]));
+  }
+  fileInput?.addEventListener('change', e=>handleDocxFile(e.target.files[0]));
+
+  // Deck detail
+  app.querySelector('#editDeckLink')?.addEventListener('click', ()=>{ VIEW={screen:'deck-edit', deckId:VIEW.deckId}; render(); });
+  app.querySelector('#exportDeckLink')?.addEventListener('click', ()=>Decks.exportToAnki(VIEW.deckId));
+  app.querySelector('#startChallengeBtn')?.addEventListener('click', ()=>openChallengeSetupModal(VIEW.deckId));
+  app.querySelectorAll('.mode-card[data-mode]').forEach(b=>b.addEventListener('click', ()=>{
+    const mode = b.dataset.mode;
+    const deck = STATE.decks[VIEW.deckId];
+    if(mode==='randomN'){
+      openModal({ title:'How many cards?',
+        body:`<div style="display:flex;gap:8px;margin-bottom:14px;">${[20,50,100].map(n=>`<button class="btn-secondary" data-n="${n}" style="flex:1;">${n}</button>`).join('')}</div><input type="text" id="customN" placeholder="Custom number">`,
+        actions:[ {label:'Cancel', className:'btn-secondary', onClick: closeModal},
+          {label:'Start', className:'btn-primary', onClick:()=>{
+              const custom = parseInt(document.getElementById('customN').value,10);
+              const n = custom>0 ? custom : (window._chosenN || 20);
+              closeModal(); Quiz.build(deck,'randomN',{n}); VIEW={screen:'quiz'}; render();
+            }} ]});
+      document.querySelectorAll('[data-n]').forEach(nb=>nb.addEventListener('click', ()=>{ window._chosenN=parseInt(nb.dataset.n,10); document.getElementById('customN').value=nb.dataset.n; }));
+      return;
+    }
+    Quiz.build(deck, mode); VIEW={screen:'quiz'}; render();
+  }));
+
+  // Deck edit
+  app.querySelector('#backToDeckDetail')?.addEventListener('click', ()=>{ VIEW={screen:'deck', deckId:VIEW.deckId}; render(); });
+  app.querySelector('#addCardBtn')?.addEventListener('click', ()=>openCardEditModal(VIEW.deckId, null));
+  app.querySelectorAll('[data-edit-card]').forEach(b=>b.addEventListener('click', ()=>openCardEditModal(VIEW.deckId, b.dataset.editCard)));
+  app.querySelectorAll('[data-delete-card]').forEach(b=>b.addEventListener('click', ()=>{
+    openModal({ title:'Delete this card?', body:'<p>This removes the card and its study history.</p>',
+      actions:[ {label:'Cancel', className:'btn-secondary', onClick: closeModal},
+        {label:'Delete', className:'btn-primary btn-danger', onClick:()=>{ Decks.removeCard(VIEW.deckId, b.dataset.deleteCard); closeModal(); render(); }} ]});
+  }));
+
+  // Quiz
+  const flipperEl = app.querySelector('#cardFlipper');
+    if(flipperEl){
+      Gestures.attach(flipperEl);
+      sizeCardFlipper();
+      // images load async — re-measure once each one finishes so the box
+      // grows to fit instead of clipping while the image is still loading
+      flipperEl.querySelectorAll('img').forEach(img=>{
+        if(!img.complete) img.addEventListener('load', sizeCardFlipper);
+      });
+    }
+  app.querySelector('#quizExit')?.addEventListener('click', ()=>{
+    Quiz.endSession();
+    if(Quiz.session && (Quiz.session.sessionCorrect+Quiz.session.sessionIncorrect)>0){ VIEW={screen:'summary'}; }
+    else { VIEW={screen:'deck', deckId: Quiz.session ? Quiz.session.deckId : VIEW.deckId}; }
+    render();
+  });
+  app.querySelector('#starBtn')?.addEventListener('click', ()=>{
+    const deck = STATE.decks[Quiz.session.deckId];
+    const card = Quiz.current();
+    const dc = deck.cards.find(c=>c.id===card.id);
+    dc.starred = !dc.starred;
+    persist(); render();
+  });
+  if(Quiz.session && Quiz.session.challenge && VIEW.screen==='quiz') startChallengeTimerTick();
+
+  // Summary
+  app.querySelector('#backToDeck')?.addEventListener('click', ()=>{ VIEW={screen:'deck', deckId:Quiz.session.deckId}; render(); });
+  app.querySelector('#studyAgain')?.addEventListener('click', ()=>{
+    const deck = STATE.decks[Quiz.session.deckId];
+    const mode = Quiz.session.mode, n = Quiz.session.total, challengeOpts = Quiz.session.challenge ? {challenge:Quiz.session.challenge} : {};
+    Quiz.build(deck, mode, Object.assign({n}, challengeOpts));
+    VIEW={screen:'quiz'}; render();
+  });
+}
+
+async function handleDocxFile(file){
+  if(!file) return;
+  if(!file.name.toLowerCase().endsWith('.docx')){ showToast('Please choose a .docx file'); return; }
+  showToast('Reading document…'); // large files can take a moment to convert — no size cap is enforced
+  try{
+    const arrayBuffer = await file.arrayBuffer();
+    const result = await mammoth.convertToHtml({ arrayBuffer }, {
+      convertImage: mammoth.images.imgElement(image => image.read('base64').then(b64 => ({ src: 'data:'+image.contentType+';base64,'+b64 })))
+    });
+    const parsed = Parser.parseHtmlBlocks(result.value);
+    pendingParse = { cards: parsed.cards, errors: parsed.errors, warnings: parsed.warnings || [], raw: pendingParse.raw };
+    if(!document.getElementById('deckNameInput').value){ VIEW.suggestedName = file.name.replace(/\.docx$/i,''); }
+    if(parsed.cards.length) showToast(`Found ${parsed.cards.length} Q&A pair${parsed.cards.length===1?'':'s'}`);
+    render();
+  }catch(err){ showToast('Could not read that file'); console.error(err); }
+}
+
+/* #####################################################################
+   INIT
+   ##################################################################### */
+loadState();
+</script>
+</body>
+</html>
