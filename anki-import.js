@@ -368,4 +368,9 @@ function patchDom(){
 const origRender = window.render;
 window.render = function(){ stopAudio(); origRender(); patchDom(); };
 
+
+/* ---------- visible proof that this file loaded (safe to delete these 2 lines later) ---------- */
+window.ANKI_ADDON_VERSION = 'v4';
+setTimeout(()=>showToast('Anki add-on v4 is active'), 700);
+
 })();
