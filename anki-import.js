@@ -188,14 +188,14 @@ const clozeText = (txt, n, reveal) => txt.replace(CLOZE_RE, (m, k, ans, hint)=> 
 const audioLabel = f => f.replace(/\s*audio\s*$/i, '').trim();
 
 /* ---------- THE IMPORTER ---------- */
-async function importApkg(file){
+async function importApkg(file, preZip){
   importing = true;
-  const base = file.name.replace(/\.apkg$/i, '');
+  const base = file.name.replace(/\.(zip|colpkg)$/i, '').replace(/\.apkg$/i, '');
   const fail = msg => { pendingParse = { cards:[], errors:[msg], warnings:[], raw: pendingParse.raw }; render(); };
   try{
     showToast('Reading Anki package…');
     const SQL = await loadLibs();
-    const zip = await JSZip.loadAsync(file);
+    const zip = preZip || await JSZip.loadAsync(file);
     const dbFile = zip.file('collection.anki21') || zip.file('collection.anki2');
     if(!dbFile) return fail(zip.file('collection.anki21b')
       ? 'This package uses Anki\'s newest format. Re-export it from Anki with "Support older Anki versions" ticked, then try again.'
@@ -328,9 +328,18 @@ function createFromGroups(){
 
 /* ---------- Hook into the app: file dispatcher + post-render patching ---------- */
 const origDocx = window.handleDocxFile;
-window.handleDocxFile = function(file){
-  if(file && /\.apkg$/i.test(file.name)) return importApkg(file);
-  return origDocx(file);                       // .docx path is exactly the old code
+window.handleDocxFile = async function(file){
+  if(!file) return;
+  if(/\.docx$/i.test(file.name)) return origDocx(file);          // normal .docx: exactly the old code
+  if(/\.apkg$/i.test(file.name)) return importApkg(file);
+  // Unknown or renamed file (iOS can hide/change extensions): look inside it.
+  try{
+    await loadLibs();
+    const z = await JSZip.loadAsync(file);
+    if(z.file(/^collection\.anki/).length) return importApkg(file, z);
+    if(z.file('word/document.xml')) return origDocx(new File([file], file.name+'.docx'));
+  }catch(e){ console.error(e); }
+  showToast('Not a .docx or Anki .apkg file: '+file.name);
 };
 
 function patchDom(){
