@@ -337,6 +337,11 @@ window.handleDocxFile = async function(file){
     await loadLibs();
     const z = await JSZip.loadAsync(file);
     if(z.file(/^collection\.anki/).length) return importApkg(file, z);
+    const inner = z.file(/\.(apkg|colpkg)$/i)[0];                  // a .zip that CONTAINS the .apkg
+    if(inner){
+      const iz = await JSZip.loadAsync(await inner.async('uint8array'));
+      if(iz.file(/^collection\.anki/).length) return importApkg({ name: inner.name.split('/').pop() }, iz);
+    }
     if(z.file('word/document.xml')) return origDocx(new File([file], file.name+'.docx'));
   }catch(e){ console.error(e); }
   showToast('Not a .docx or Anki .apkg file: '+file.name);
