@@ -347,6 +347,80 @@ window.handleDocxFile = async function(file){
   showToast('Not a .docx or Anki .apkg file: '+file.name);
 };
 
+
+/* ---------- FLASHCARD TEXT SIZE (Word-style: number box in pt, presets list, A- / A+) ---------- */
+const FS_DEFAULT = 12, FS_MIN = 6, FS_MAX = 120;               // 12 pt = 16 px = the app's original size
+const FS_PRESETS = [8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72];   // Word's size list
+const fsStyle = document.createElement('style');
+document.head.appendChild(fsStyle);
+const fsStyle2 = document.createElement('style');
+fsStyle2.textContent = `.fs-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.fs-name{flex:1 1 100%;font-weight:600;font-size:13px;color:var(--ink-soft);}
+.fs-step{width:42px;height:42px;border:1.5px solid var(--line);border-radius:8px;font-weight:700;font-size:14px;color:var(--ink);}
+.fs-step:hover{border-color:var(--teal);color:var(--teal);}
+.fs-num{width:84px;height:42px;padding:0 8px;border:1.5px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font-family:'IBM Plex Mono',monospace;font-size:16px;text-align:center;}
+.fs-unit{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--ink-soft);}
+.fs-sel{height:42px;border:1.5px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font-size:14px;padding:0 8px;}
+.fs-preview{border:1.5px dashed var(--line);border-radius:10px;padding:14px 16px;margin-top:6px;}
+.fs-pq{font-family:'Fraunces',serif;font-weight:500;line-height:1.45;margin-bottom:8px;}
+.fs-pa{font-family:'Public Sans',sans-serif;line-height:1.55;}`;
+document.head.appendChild(fsStyle2);
+
+const fsGet = side => {
+  const v = parseFloat(((STATE && STATE.settings) || {})[side+'FontPt']);
+  return isFinite(v) ? Math.min(FS_MAX, Math.max(FS_MIN, v)) : FS_DEFAULT;
+};
+function applyFontSizes(){ fsStyle.textContent = '.q-text{font-size:'+fsGet('q')+'pt;}.a-text{font-size:'+fsGet('a')+'pt;}'; }
+function fsSet(side, v){ STATE.settings[side+'FontPt'] = Math.round(v * 2) / 2; persist(); applyFontSizes(); }
+function fsNext(v, dir){
+  if(dir > 0){ const n = FS_PRESETS.find(p=>p > v + 1e-9); return n === undefined ? Math.min(FS_MAX, v + 4) : n; }
+  const lower = FS_PRESETS.filter(p=>p < v - 1e-9);
+  return lower.length ? lower[lower.length - 1] : Math.max(FS_MIN, v - 1);
+}
+function fsRowHtml(side, title){
+  return '<div class="fs-row"><label class="fs-name">'+title+'</label>'
+    + '<button type="button" class="fs-step" data-fs-step="'+side+':-1" aria-label="Smaller">A−</button>'
+    + '<input class="fs-num" type="number" inputmode="decimal" min="'+FS_MIN+'" max="'+FS_MAX+'" step="0.5" value="'+fsGet(side)+'" data-fs-num="'+side+'">'
+    + '<span class="fs-unit">pt</span>'
+    + '<button type="button" class="fs-step" data-fs-step="'+side+':1" aria-label="Bigger">A+</button>'
+    + '<select class="fs-sel" data-fs-sel="'+side+'"><option value="">Presets…</option>'+FS_PRESETS.map(p=>'<option value="'+p+'">'+p+' pt</option>').join('')+'</select></div>';
+}
+function fsRefresh(syncInputs){
+  const pq = document.getElementById('fsPrevQ'), pa = document.getElementById('fsPrevA');
+  if(pq) pq.style.fontSize = fsGet('q')+'pt';
+  if(pa) pa.style.fontSize = fsGet('a')+'pt';
+  if(syncInputs) document.querySelectorAll('[data-fs-num]').forEach(i=>{ i.value = fsGet(i.dataset.fsNum); });
+}
+function injectFontPanel(){
+  const app = document.getElementById('app');
+  if(!app || document.getElementById('fontPanel')) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'panel'; wrap.id = 'fontPanel'; wrap.style.marginTop = '16px';
+  wrap.innerHTML = '<div class="section-label" style="margin-top:0;">Flashcard text size</div>'
+    + '<p style="color:var(--ink-soft);font-size:13.5px;margin-bottom:14px;">Set the size of the text on the flashcards, in points like in Word ('+FS_MIN+'–'+FS_MAX+' pt, default '+FS_DEFAULT+'). The question and answer sides are set separately.</p>'
+    + fsRowHtml('q', 'Question side (front)') + fsRowHtml('a', 'Answer side (back)')
+    + '<div class="fs-preview"><div id="fsPrevQ" class="fs-pq">皆さん</div><div id="fsPrevA" class="fs-pa">Everyone — a polite way to address a group of people.</div></div>'
+    + '<button type="button" class="btn-secondary" id="fsReset" style="margin-top:14px;">Reset both to '+FS_DEFAULT+' pt</button>';
+  app.appendChild(wrap);
+  wrap.addEventListener('click', e=>{
+    const b = e.target.closest('[data-fs-step]');
+    if(b){ const [side, dir] = b.dataset.fsStep.split(':'); fsSet(side, fsNext(fsGet(side), +dir)); fsRefresh(true); return; }
+    if(e.target.id === 'fsReset'){ fsSet('q', FS_DEFAULT); fsSet('a', FS_DEFAULT); fsRefresh(true); }
+  });
+  wrap.addEventListener('input', e=>{                           // live while typing, only for valid values
+    const side = e.target.dataset.fsNum; if(!side) return;
+    const v = parseFloat(e.target.value);
+    if(isFinite(v) && v >= FS_MIN && v <= FS_MAX){ fsSet(side, v); fsRefresh(false); }
+  });
+  wrap.addEventListener('change', e=>{                          // on finish: clamp bad values
+    const side = e.target.dataset.fsNum;
+    if(side){ const v = parseFloat(e.target.value); fsSet(side, isFinite(v) ? Math.min(FS_MAX, Math.max(FS_MIN, v)) : fsGet(side)); fsRefresh(true); return; }
+    const sel = e.target.dataset.fsSel;
+    if(sel && e.target.value){ fsSet(sel, parseFloat(e.target.value)); e.target.value = ''; fsRefresh(true); }
+  });
+  fsRefresh(false);
+}
+
 function patchDom(){
   if(VIEW.screen === 'new-deck'){
     const fi = document.getElementById('fileInput');
@@ -363,14 +437,16 @@ function patchDom(){
     }
   } else if(VIEW.screen === 'quiz'){
     preloadAudio();
+  } else if(VIEW.screen === 'settings'){
+    injectFontPanel();
   }
 }
 const origRender = window.render;
-window.render = function(){ stopAudio(); origRender(); patchDom(); };
+window.render = function(){ stopAudio(); applyFontSizes(); origRender(); patchDom(); };
 
 
 /* ---------- visible proof that this file loaded (safe to delete these 2 lines later) ---------- */
-window.ANKI_ADDON_VERSION = 'v4';
-setTimeout(()=>showToast('Anki add-on v4 is active'), 700);
+window.ANKI_ADDON_VERSION = 'v5';
+setTimeout(()=>showToast('Add-on v5 active (Anki import + text size)'), 700);
 
 })();
